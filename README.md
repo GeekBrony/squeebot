@@ -20,6 +20,7 @@ Template:
     "port": 6667,
     "channel": "#Bronydom",
     "prefix":"!",
+    "command":null,
 
     "enableRelay": false,
     "relayPort": 9977,
