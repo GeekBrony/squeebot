@@ -2,6 +2,14 @@
 'use strict';
 // IRC bot by LunaSquee (Originally djazz, best poni :3)
 
+/*
+
+TODO
+
+- Command to run on login
+
+*/
+
 // Modules
 var net = require('net');
 var http = require('http');
@@ -23,6 +31,7 @@ var IDENT = settings.password;      // Password of the bot. Set to null to not u
 var REALNAME = 'GeekBrony\'s Bot';  // Real name of the bot
 var CHANNEL = settings.channel;     // The default channel for the bot
 var PREFIX = settings.prefix;       // The prefix of commands
+var COMMAND = settings.command;		// Command to Run on Login
 // Episode countdown
 var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, minute, second (UTC)
 var week = 7*24*60*60*1000;
@@ -178,7 +187,7 @@ var commands = {
         var param = simplified[1]; 
         if(param != null) { 
         	/* BOOKS */
-            if(param === "books" || param === "BOOKS" || param === "Books") {
+            if(param.toUpperCase() === "BOOKS") {
             	var roll = randomize(1,4);
     			var messageToSend = "Error. Roll # is: "+roll;
     			switch(roll) {
@@ -204,8 +213,14 @@ var commands = {
             			break;
     			}
         		sendPM(target, messageToSend);
-            } else if(param === "pony" || param === "PONY" || param === "Pony") {
-            sendPM(target, "One does not simply name best pony without mentioning twilight as the best!");
+            } else if(param.toUpperCase() === "PONY") {
+            	sendPM(target, "One does not simply name best pony without mentioning Twilight as the best!");
+            } else if(param.toUpperCase() === "BRONIES") {
+            	sendPM(target, "I hereby declare all of the bronies to bow down to me, THE ABSOLUTE BESTEST PONY OF ALL!");
+            } else if(param.toUpperCase() === "SPIKE") {            	
+            	sendPM(target, "My #1 Assistant! :D");
+            } else if(param.toUpperCase() === "PINKIE" && simplified[2].toUpperCase() === "PIE") {
+            	sendPM(target, "");
             } else {
             	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
             }
@@ -783,6 +798,7 @@ bot.on('join', function (channel, nick) {
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
+        sendPM(channel, "Hello, "+nick+"!");
         IHandleJoin(nick, channel);
     }
 });
@@ -804,6 +820,7 @@ bot.on('part', function (channel, nick, reason) {
     if (nick !== NICK) {
         mylog((" <-- ".red.bold)+'%s has left %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has left ", "PART");
+        sendPM(channel, "Bye, "+nick+"!");
         IHandlePart(nick, channel);
     } else {
         mylog((" <-- ".red.bold)+'You have left %s', channel.bold);
