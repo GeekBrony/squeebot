@@ -20,7 +20,7 @@ var SERVER = settings.server;       // The server we want to connect to
 var PORT = settings.port || 6667;   // The connection port which is usually 6667
 var NICK = settings.username;       // The bot's nickname
 var IDENT = settings.password;      // Password of the bot. Set to null to not use password login.
-var REALNAME = 'LunaSquee\'s bot';  // Real name of the bot
+var REALNAME = 'GeekBrony\'s Bot';  // Real name of the bot
 var CHANNEL = settings.channel;     // The default channel for the bot
 var PREFIX = settings.prefix;       // The prefix of commands
 // Episode countdown
@@ -28,8 +28,7 @@ var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, min
 var week = 7*24*60*60*1000;
 
 // Rules for individual channels.
-var rules = {"#bronytalk":["No spam of any kind.", "No IRC bots (unless said otherwise by ops)", "No insulting others."],
-            "#parasprite":["No spam of any kind.", "No IRC bots (unless said otherwise by ops)", "No insulting others."]}
+var rules = {"#bronydom":["You can read the rules at http://goo.gl/8822BD"]}
 
 // This is the list of all your commands.
 // "command":{"action":YOUR FUNCTION HERE, "description":COMMAND USAGE(IF NOT PRESENT, WONT SHOW UP IN !commands)}
@@ -57,7 +56,7 @@ var commands = {
     }), "description":"<command> - Show command description"},
     
     "infoc":{"action":(function(simplified, nick, chan, message, target) {
-        sendPM(target, nick+": This IRC channel was created by LunaSquee and djazz. It is the main IRC channel for mlp-episodes site and Parasprite Radio");
+        sendPM(target, nick+": Bronydom Network (bronydom.net) Official IRC Chat | Created by GeekBrony | Bot originally made by LunaSquee and djazz");
     }), "description":"- Channel Information"},
     
     "rules":{"action":(function(simplified, nick, chan, message, target, mentioned, pm) {
@@ -69,9 +68,9 @@ var commands = {
     }), "description":"- Channel Rules"},
     
     "np":{"action":(function(simplified, nick, chan, message, target) {
-        getCurrentSong(function(d, e, i) { 
+        getCurrentSong(function(d, e, f, i) { 
             if(i) { 
-                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Click here to tune in: http://radio.djazz.se/")
+                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/popup/radio.php")
             } else { 
                 sendPM(target, d)
             }
@@ -79,14 +78,14 @@ var commands = {
     }), "description":"- Currently playing song"},
     
     "radio":{"action":(function(simplified, nick, chan, message, target) {
-        getCurrentSong(function(d, e, i) { 
+        getCurrentSong(function(d, e, f, i) { 
             if(i) { 
-                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Click here to tune in: http://radio.djazz.se/")
+                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/popup/radio.php")
             } else { 
                 sendPM(target, d)
             }
         })
-    }), "description":"- Tune in to Parasprite Radio"},
+    }), "description":"- Tune in to Bronydom Radio"},
     
     "yay":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": http://flutteryay.com")
@@ -97,14 +96,19 @@ var commands = {
     })},
     
     "hug":{"action":(function(simplified, nick, chan, message, target) {
-        sendPM(target, "*Hugs "+nick+"*");
+        sendPM(target, "* hugs "+nick+" *");
+    })},
+    
+    "moon":{"action":(function(simplified, nick, chan, message, target) {
+        //bot.kick(chan, nick, "TO THE MOOOOON!");
+        bot.send("kick", chan, nick, "TO THE MOOOOON!")
     })},
     
     "viewers":{"action":(function(simplified, nick, chan, message, target) {
         livestreamViewerCount((function(r) { 
-            sendPM(target, r+" | Livestream: http://djazz.se/live/")
+            sendPM(target, r+" | Livestream: http://bronydom.net/livestream")
         }))
-    }),"description":"- Number of people watching djazz'es livestream"},
+    }),"description":"- Number of people watching Bronydom Network's livestream"},
     
     "nextep":{"action":(function(simplified, nick, chan, message, target) {
         var counter = 0;
@@ -130,7 +134,7 @@ var commands = {
             reqplayers = true;
         }
         
-        getGameInfo("minecraft", "minecraft.djazz.se", function(err, msg) {
+        getGameInfo("minecraft", "play.bronydom.net", function(err, msg) {
             if(err) { 
                 sendPM(target, err); 
                 return;
@@ -146,7 +150,7 @@ var commands = {
             reqplayers = true;
         }
 
-        getGameInfo("minecraft", "minecraft.djazz.se", function(err, msg) {
+        getGameInfo("minecraft", "play.bronydom.net", function(err, msg) {
             if(err) { 
                 sendPM(target, err);
                 return;
@@ -154,22 +158,6 @@ var commands = {
             sendPM(target, msg);
         }, reqplayers);
     })},
-
-    "mumble":{"action":(function(simplified, nick, chan, message, target) {
-        var requsers = false;
-
-        if(simplified[1] === "users") {
-            requsers = true;
-        }
-
-        getGameInfo("mumble", "mumble.djazz.se", function(err, msg) {
-            if(err) {
-                sendPM(target, err);
-                return;
-            }
-            sendPM(target, msg);
-        }, requsers);
-    }), "description":"[users] - Information about our Mumble Server"},
     
     "episode":{"action":(function(simplified, nick, chan, message, target) {
         var param = simplified[1]; 
@@ -184,7 +172,47 @@ var commands = {
         } else {
             sendPM(target, irc.colors.wrap("dark_red",nick+": Please provide me with episode number and season, for example: !ep s4e4"));
         }
-    }),"description":"s<Season> e<Episode Number> - Open a pony episode"}
+    }),"description":"s<Season> e<Episode Number> - Open a pony episode"},
+    
+    "t":{"action":(function(simplified, nick, chan, message, target) {
+        var param = simplified[1]; 
+        if(param != null) { 
+        	/* BOOKS */
+            if(param === "books" || param === "BOOKS" || param === "Books") {
+            	var roll = randomize(1,4);
+    			var messageToSend = "Error. Roll # is: "+roll;
+    			switch(roll) {
+    				case 1:
+            			messageToSend = "OH, that reminds me! I need to read that new Daring Do book!";
+            			break;
+        			case 2:
+        				if(simplified[2] != null) {
+            				messageToSend = "I must continue my studies about "+simplified[2]+"!";
+            			} else {
+            				messageToSend = "Books?! Where?";
+            			}
+            			break;
+        			case 3:
+            			messageToSend = "[BOOKS INTENSIFY]";
+            			break;
+        			case 4:
+           				if(simplified[2] != null) {
+            				messageToSend = "Now, where's that book about "+simplified[2]+"?";
+            			} else {
+            				messageToSend = "SPIKE! Get that book!";
+            			}
+            			break;
+    			}
+        		sendPM(target, messageToSend);
+            } else if(param === "pony" || param === "PONY" || param === "Pony") {
+            sendPM(target, "One does not simply name best pony without mentioning twilight as the best!");
+            } else {
+            	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
+            }
+        } else {
+            sendPM(target, irc.colors.wrap("dark_red",nick+": Please provide me with a topic to talk about!"));
+        }
+    }),"description":"- Provide something for me to talk about, and I will."}
 };
 
 /*
@@ -384,10 +412,10 @@ function listCommands(target, nick) {
         var obj = commands[command];
         if("description" in obj) {
             variab = !variab;
-            listofem.push("\u0002"+irc.colors.wrap((variab?"dark_green":"light_green"), command));
+            listofem.push("\u0002"+irc.colors.wrap((variab?"dark_green":"light_green"), "!"+command));
         }
     }
-    comms.push(listofem.join(" "));
+    comms.push(listofem.join(", "));
     comms.push("***** End of "+PREFIX+"commands *****");
     sendWithDelay(comms, nick, 1000);
 }
@@ -411,7 +439,7 @@ function listRulesForChannel(onChannel) {
         sendPM(channel, "Channel Rules of "+onChannel+": ");
         var rls = rules[channel];
         rls.forEach(function(e) {
-            sendPM(channel, "["+(rls.indexOf(e)+1)+"] "+e);
+            sendPM(channel, e);
         });
     }
 }
@@ -443,22 +471,22 @@ function formatmesg(message) {
     return pass3.match(/#i/g) ? pass3.replace(/#i/g, '\u0014') : pass3;
 }
 
-// Get current Parasprite Radio song
+// Get current Bronydom Radio song
 function getCurrentSong(callback) {
-    JSONGrabber("http://radio.djazz.se/icecast.php", function(success, content) {
+    JSONGrabber("http://www.bronydom.net/api/stats/", function(success, content) {
         if(success) {
-            if(content.title != null) {
-                var theTitle = new Buffer(content.title, "utf8").toString("utf8");
+            if(content.radio.song_info.text != null) {
+                var theTitle = new Buffer(content.radio.song_info.text, "utf8").toString("utf8");
                 var splitUp = theTitle.replace(/\&amp;/g, "&").split(" - ");
                 if(splitUp.length===2) {
-                    theTitle=splitUp[1]+(splitUp[0]?" by "+splitUp[0]:"");
+                    theTitle=irc.colors.wrap("bold",splitUp[1])+(splitUp[0]?" by "+irc.colors.wrap("bold",splitUp[0]):"");
                 }
-                callback(theTitle, content.listeners, true);
+                callback(theTitle, irc.colors.wrap("bold",content.radio.listeners.all_streams), irc.colors.wrap("bold",content.radio.song_info.score), true);
             } else {
-                callback("Parasprite Radio is offline!", "", false);
+                callback("Bronydom Radio is offline (for some reason)!", "", false);
             }
         } else {
-            callback("Parasprite Radio is offline!", "", false);
+            callback("Bronydom Radio is offline (for some reason)!", "", false);
         }
     });
 }
@@ -476,7 +504,7 @@ function getGameInfo(game, host, callback, additional) {
                 switch(game) {
                     case "tf2":
                         if(additional) {
-                            callback(null, "[Team Fortress 2] " + (typeof(additional) === "object" ? state[additional[0]][additional[1]] : state[additional]));
+                            callback(null, "[!Team Fortress 2] " + (typeof(additional) === "object" ? state[additional[0]][additional[1]] : state[additional]));
                         } else {
                             callback(null, "[Team Fortress 2] IP: "+host+" MOTD: \""+state.name+"\" Players: "+state.raw.numplayers+"/"+state.maxplayers);
                         }
@@ -544,9 +572,9 @@ function dailymotion(id, callback) {
 
 // Livestream viewers
 function livestreamViewerCount(callback) {
-    JSONGrabber("http://djazz.se/live/info.php", function(success, content) {
+    JSONGrabber("http://www.bronydom.net/status/livestream.php", function(success, content) {
         if(success) {
-            var view = content.viewcount;
+            var view = content.viewers;
             if(view!=-1) {
                 callback("Viewers: "+view);
             } else {
@@ -606,8 +634,31 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
                 }))
             }
         }
-    }else if(isMentioned) {
-        sendPM(target, nick+": Hello there!");
+    }
+    else if(isMentioned) {
+    	var roll = randomize(1,6);
+    	var messageToSend = "Error. Roll # is: "+roll;
+    	switch(roll) {
+    	case 1:
+            messageToSend = "Oh, hey "+nick+"!";
+            break;
+        case 2:
+            messageToSend = "Hello, "+nick+"!";
+            break;
+        case 3:
+            messageToSend = "What do you want, "+nick+"?";;
+            break;
+        case 4:
+            messageToSend = "Who, me?";
+            break;
+        case 5:
+            messageToSend = "How are you, "+nick+"?";
+            break;
+        case 6:
+            messageToSend = "*hugs "+nick+"*";
+            break;
+    	}
+        sendPM(target, messageToSend);
     }
 }
 
@@ -729,7 +780,6 @@ bot.on('join', function (channel, nick) {
     if (nick === NICK) {
         mylog((" --> ".green.bold)+"You joined channel "+channel.bold);
         rl.setPrompt(util.format("> ".bold.magenta), 2);
-        rl.prompt(true);
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
@@ -894,3 +944,6 @@ function readableTime(timems, ignoreMs) {
     else if (time < 86400) return zf(time / 3600|0)+"h "+zf((time % 3600)/60|0)+"m "+zf((time % 3600)%60)+ms+"s";
     else return (time / 86400|0)+"d "+zf((time % 86400)/3600|0)+"h "+zf((time % 3600)/60|0)+"m "+zf((time % 3600)%60)+"s";
 } 
+function randomize(bottom, top) {
+    return Math.floor( Math.random() * ( 1 + top - bottom ) ) + bottom;
+}

@@ -1,6 +1,6 @@
 # Squeebot
 
-This is a [node.js](http://nodejs.org/) powered IRC bot made by [LunaSquee](https://github.com/LunaSquee) and [djazz](https://github.com/daniel-j)
+This is a [node.js](http://nodejs.org/) powered IRC bot made by [LunaSquee](https://github.com/LunaSquee) and [djazz](https://github.com/daniel-j) and modified by [GeekBrony](https://github.com/geekbrony)
 
 ### Getting started
 1. Clone this repo
@@ -18,7 +18,7 @@ Template:
     "password": "*****",
     "server": "irc.canternet.org",
     "port": 6667,
-    "channel": "#BronyTalk",
+    "channel": "#Bronydom",
     "prefix":"!",
 
     "enableRelay": false,
