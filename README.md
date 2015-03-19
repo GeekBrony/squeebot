@@ -22,7 +22,7 @@ Template:
     "prefix":"!",
     "command":null,
     "nickserv":false,
-    "nickPass":"*******",
+    "nickpass":"*******",
 
     "enableRelay": false,
     "relayPort": 9977,
