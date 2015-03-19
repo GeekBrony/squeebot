@@ -21,6 +21,8 @@ Template:
     "channel": "#Bronydom",
     "prefix":"!",
     "command":null,
+    "nickserv":false,
+    "nickPass":"*******",
 
     "enableRelay": false,
     "relayPort": 9977,
