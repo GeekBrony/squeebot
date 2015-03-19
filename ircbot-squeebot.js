@@ -32,6 +32,8 @@ var REALNAME = 'GeekBrony\'s Bot';  // Real name of the bot
 var CHANNEL = settings.channel;     // The default channel for the bot
 var PREFIX = settings.prefix;       // The prefix of commands
 var COMMAND = settings.command;		// Command to Run on Login
+var nickServ = settings.nickserv;
+var nickPassword = settings.nickpass;
 // Episode countdown
 var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, minute, second (UTC)
 var week = 7*24*60*60*1000;
@@ -795,10 +797,19 @@ bot.on('join', function (channel, nick) {
     if (nick === NICK) {
         mylog((" --> ".green.bold)+"You joined channel "+channel.bold);
         rl.setPrompt(util.format("> ".bold.magenta), 2);
+        if(nickServ == true) {
+			sendPM("NickServ", "identify "+nickPassword);
+			mylog((" --> ".green.bold)+"Identified! "+channel.bold);
+		}
+
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
-        sendPM(channel, "Hello, "+nick+"!");
+        if(nick.toUpperCase == "GeekBrony" || nick.toUpperCase == "GB") {
+        	sendPM(channel, nick+", the brony who made me, is back! :D");
+        } else {
+        	sendPM(channel, "Hello, "+nick+"!");
+        }
         IHandleJoin(nick, channel);
     }
 });
@@ -905,7 +916,6 @@ rl.on('line', function (line) {
 
 info('Connecting...');
 ircRelayServer();
-
 function mylog() {
     // rl.pause();
     rl.output.write('\x1b[2K\r');
