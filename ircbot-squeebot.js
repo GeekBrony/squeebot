@@ -222,7 +222,12 @@ var commands = {
             } else if(param.toUpperCase() === "SPIKE") {            	
             	sendPM(target, "My #1 Assistant! :D");
             } else if(param.toUpperCase() === "PINKIE" && simplified[2].toUpperCase() === "PIE") {
-            	sendPM(target, "");
+            	sendPM(target, "Where's Pinkie? Did she break the fourth wall again?");
+            } else if(param.toUpperCase() === "TWILIGHT" && simplified[2].toUpperCase() === "SPARKLE") {
+            	sendPM(target, "Uuhh, why would I talk about me?");
+            } else if(param.toUpperCase() === "THE" && simplified[2].toUpperCase() === "DRESS") {
+            	sendPM(target, "Obviously, it's Blue and Black...or is it White and Gold?");
+            	bot.action(target, "starts sweating uncontrollably")
             } else {
             	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
             }
@@ -653,27 +658,36 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
         }
     }
     else if(isMentioned) {
-    	var roll = randomize(1,6);
+    	var roll = randomize(1,9);
     	var messageToSend = "Error. Roll # is: "+roll;
     	switch(roll) {
-    	case 1:
-            messageToSend = "Oh, hey "+nick+"!";
-            break;
-        case 2:
-            messageToSend = "Hello, "+nick+"!";
-            break;
-        case 3:
-            messageToSend = "What do you want, "+nick+"?";;
-            break;
-        case 4:
-            messageToSend = "Who, me?";
-            break;
-        case 5:
-            messageToSend = "How are you, "+nick+"?";
-            break;
-        case 6:
-            messageToSend = "*hugs "+nick+"*";
-            break;
+    		case 1:
+            	messageToSend = "Oh, hey "+nick+"!";
+            	break;
+        	case 2:
+            	messageToSend = "Hello, "+nick+"!";
+            	break;
+        	case 3:
+            	messageToSend = "What do you want, "+nick+"?";;
+            	break;
+        	case 4:
+            	messageToSend = "Who, me?";
+            	break;
+        	case 5:
+            	messageToSend = "How are you, "+nick+"?";
+            	break;
+        	case 6:
+            	messageToSend = "* hugs "+nick+" *";
+            	break;
+        	case 7:
+            	messageToSend = "* looks up at "+nick+" *";
+            	break;
+        	case 8:
+            	messageToSend = "* studies "+nick+" *";
+            	break;
+        	case 9:
+            	messageToSend = "* yells at "+nick+" *";
+            	break;
     	}
         sendPM(target, messageToSend);
     }
@@ -800,6 +814,7 @@ bot.on('join', function (channel, nick) {
         if(nickServ == true) {
 			sendPM("NickServ", "identify "+nickPassword);
 			mylog((" --> ".green.bold)+"Identified! "+channel.bold);
+			sendPM(channel, "I'm baack!");
 		}
 
     } else {
@@ -841,6 +856,7 @@ bot.on('part', function (channel, nick, reason) {
 bot.on('quit', function (nick, reason, channels) {
     mylog((" <-- ".red.bold)+'%s has quit (%s)', nick.bold, reason);
     emitter.emit('newIrcMessage', nick, "", " has quit ("+reason+")", "QUIT");
+    sendPM(channel, "Bye, "+nick+"!");
     IHandleQuit(nick);
 });
 bot.on('names', function(channel, nicks) {
