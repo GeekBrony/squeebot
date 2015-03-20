@@ -1,0 +1,15 @@
+{
+    "username": "SqueeBot",
+    "password": null,
+    "server": "irc.canternet.org",
+    "port": 6667,
+    "channel": "#BronydomTest",
+    "prefix":"!",
+    "command":null,
+    "nickserv":false,
+    "nickpass":"",
+
+    "enableRelay": false,
+    "relayPort": 9977,
+    "relayPassword": ""
+}
