@@ -48,7 +48,7 @@ var commands = {
     "commands":{"action":(function(simplified, nick, chan, message, target) {
         listCommands(target, nick)
     }), "description":"- All Commands"},
-    
+
     "command":{"action":(function(simplified, nick, chan, message, target) {
         if(simplified[1]) {
             var cmdName = (simplified[1].indexOf(PREFIX) === 0 ? simplified[1].substring(1) : simplified[1]);
@@ -66,11 +66,11 @@ var commands = {
             sendPM(target, nick+": Usage: \u0002"+PREFIX+"command\u000f <command>");
         }
     }), "description":"<command> - Show command description"},
-    
+
     "infoc":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": Bronydom Network (bronydom.net) Official IRC Chat | Created by GeekBrony | Bot originally made by LunaSquee and djazz");
     }), "description":"- Channel Information"},
-    
+
     "rules":{"action":(function(simplified, nick, chan, message, target, mentioned, pm) {
         if(pm) {
             sendPM(target, "This command can only be executed in a channel.");
@@ -78,50 +78,50 @@ var commands = {
             listRulesForChannel(chan);
         }
     }), "description":"- Channel Rules"},
-    
+
     "np":{"action":(function(simplified, nick, chan, message, target) {
-        getCurrentSong(function(d, e, f, i) { 
-            if(i) { 
+        getCurrentSong(function(d, e, f, i) {
+            if(i) {
                 sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/popup/radio.php")
-            } else { 
+            } else {
                 sendPM(target, d)
             }
         })
     }), "description":"- Currently playing song"},
-    
+
     "radio":{"action":(function(simplified, nick, chan, message, target) {
-        getCurrentSong(function(d, e, f, i) { 
-            if(i) { 
+        getCurrentSong(function(d, e, f, i) {
+            if(i) {
                 sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/popup/radio.php")
-            } else { 
+            } else {
                 sendPM(target, d)
             }
         })
     }), "description":"- Tune in to Bronydom Radio"},
-    
+
     "yay":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": http://flutteryay.com")
     })},
-    
+
     "squee":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": https://www.youtube.com/watch?v=O1adNgZl_3Q")
     })},
-    
+
     "hug":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, "* hugs "+nick+" *");
     })},
-    
+
     "moon":{"action":(function(simplified, nick, chan, message, target) {
         //bot.kick(chan, nick, "TO THE MOOOOON!");
         bot.send("kick", chan, nick, "TO THE MOOOOON!")
     })},
-    
+
     "viewers":{"action":(function(simplified, nick, chan, message, target) {
-        livestreamViewerCount((function(r) { 
+        livestreamViewerCount((function(r) {
             sendPM(target, r+" | Livestream: http://bronydom.net/livestream")
         }))
     }),"description":"- Number of people watching Bronydom Network's livestream"},
-    
+
     "nextep":{"action":(function(simplified, nick, chan, message, target) {
         var counter = 0;
         var now = Date.now();
@@ -134,27 +134,27 @@ var commands = {
             sendPM(target, "Next Season 5 episode airs in %s", readableTime(timeLeft, true));
         }
     }),"description":"- Time left until next pony episode."},
-    
+
     "episodes":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": List of all MLP:FiM Episodes: http://mlp-episodes.tk/");
     }),"description":"- List of pony episodes"},
-    
+
     "minecraft":{"action":(function(simplified, nick, chan, message, target) {
         var reqplayers = false;
-        
+
         if(simplified[1] === "players") {
             reqplayers = true;
         }
-        
+
         getGameInfo("minecraft", "play.bronydom.net", function(err, msg) {
-            if(err) { 
-                sendPM(target, err); 
+            if(err) {
+                sendPM(target, err);
                 return;
             }
-            sendPM(target, msg); 
+            sendPM(target, msg);
         }, reqplayers);
     }),"description":"[players] - Information about our Minecraft Server"},
-    
+
     "mc":{"action":(function(simplified, nick, chan, message, target) {
         var reqplayers = false;
 
@@ -163,33 +163,33 @@ var commands = {
         }
 
         getGameInfo("minecraft", "play.bronydom.net", function(err, msg) {
-            if(err) { 
+            if(err) {
                 sendPM(target, err);
                 return;
             }
             sendPM(target, msg);
         }, reqplayers);
     })},
-    
+
     "episode":{"action":(function(simplified, nick, chan, message, target) {
-        var param = simplified[1]; 
-        if(param != null) { 
-            var epis = param.match(/^s([0-9]+)e([0-9]+)$/i); 
-            if(epis){ 
-                var link = "http://mlp-episodes.tk/#epi"+epis[2]+"s"+epis[1]; 
-                sendPM(target, nick+": Watch the episode you requested here: "+link); 
-            } else { 
+        var param = simplified[1];
+        if(param != null) {
+            var epis = param.match(/^s([0-9]+)e([0-9]+)$/i);
+            if(epis){
+                var link = "http://mlp-episodes.tk/#epi"+epis[2]+"s"+epis[1];
+                sendPM(target, nick+": Watch the episode you requested here: "+link);
+            } else {
                 sendPM(target, irc.colors.wrap("dark_red",nick+": Correct usage !ep s[season number]e[episode number]"));
             }
         } else {
             sendPM(target, irc.colors.wrap("dark_red",nick+": Please provide me with episode number and season, for example: !ep s4e4"));
         }
     }),"description":"s<Season> e<Episode Number> - Open a pony episode"},
-    
+
     "statusof":{"action":(function(simplified, nick, chan, message, target) {
         var array = message.split(" ");
-        var param = array[1]; 
-        if(param != null) { 
+        var param = array[1];
+        if(param != null) {
         	if(usersSet != []){
             	if(usersSet[param] != null) {
             		sendPM(nick, param + "'s status:"+irc.colors.wrap("bold",usersSet[param]));
@@ -203,14 +203,14 @@ var commands = {
             sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a user. Example: \""+PREFIX+"statusof <user>\""));
         }
     }),"description":"Check the status of a user."},
-    
+
     "setstatus":{"action":(function(simplified, nick, chan, message, target) {
         var array = message.split(" ");
         var previousStatus;
         var param = array[1];
-        if(param != null) { 
+        if(param != null) {
         delete array[0];
-        param = array.join(" "); 
+        param = array.join(" ");
         	if(array[1] === "-r") {
         		if(!usersSet.hasOwnProperty(nick)) {
         			sendPM(nick, "You need to have a status to remove it, so nothing was removed. :P");
@@ -232,10 +232,10 @@ var commands = {
             sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a status. Example: \""+PREFIX+"setstatus <message>\" or to remove, type \""+PREFIX+"setstatus -r\""));
         }
     }),"description":"Set a status message."},
-    
+
     "t":{"action":(function(simplified, nick, chan, message, target) {
-        var param = simplified[1]; 
-        if(param != null) { 
+        var param = simplified[1];
+        if(param != null) {
         	/* BOOKS */
             if(param.toUpperCase() === "BOOKS") {
             	var roll = randomize(1,4);
@@ -265,9 +265,9 @@ var commands = {
         		sendPM(target, messageToSend);
             } else if(param.toUpperCase() === "PONY") {
             	sendPM(target, "One does not simply name best pony without mentioning Twilight as the best!");
-            } else if(param.toUpperCase() === "BRONIES") {
+            } else if(param.toUpperCase() === "BRONIES" || param.toUpperCase() === "BRONY") {
             	sendPM(target, "I hereby declare all of the bronies to bow down to me, THE ABSOLUTE BESTEST PONY OF ALL!");
-            } else if(param.toUpperCase() === "SPIKE") {            	
+            } else if(param.toUpperCase() === "SPIKE") {
             	sendPM(target, "My #1 Assistant! :D");
             } else if(param.toUpperCase() === "PINKIE" && simplified[2].toUpperCase() === "PIE") {
             	sendPM(target, "Where's Pinkie? Did she break the fourth wall again?");
@@ -276,6 +276,32 @@ var commands = {
             } else if(param.toUpperCase() === "THE" && simplified[2].toUpperCase() === "DRESS") {
             	sendPM(target, "Obviously, it's Blue and Black...or is it White and Gold?");
             	bot.action(target, "starts sweating uncontrollably")
+            } else if(param.toUpperCase() === "MARKIPLIER") {
+            	sendPM(target, "Apparently, all I see now is Markiplier on YouTube, and then some random FNAF video afterwards.");
+            } else if(param.toUpperCase() === "PEWDIEPIE") {
+              sendPM(target, "The last time I watched PewDiePie was when I was browsing through the top charts. His scream scared me and I probably will never return.");
+            } else if(param.toUpperCase() === "BRONYDOM" && simplified[2].toUpperCase() === "NETWORK") {
+              sendPM(target, "The network I belong to! :D");
+            } else if(param.toUpperCase() === "GEEKBRONY") {
+              sendPM(target, "Uhm, about GeekBrony? He's cool. He developed me! :D");
+            } else if(param.toUpperCase() === "LIFE") {
+              sendPM(target, "Life? Do I have a life? Good question.");
+            } else if(param.toUpperCase() === "CLOTHES") {
+              sendPM(target, "Haha, funny. I don't think a javascript program can wear some clothes.");
+            } else if(param.toUpperCase() === "JOKE" || param.toUpperCase() === "HUMOR") {
+              sendPM(target, "How do I joke? I'm a program. I don't think programs with actual humor have been invented yet.");
+            } else if(param.toUpperCase() === "MARRY" && simplified[2].toUpperCase() === "ME") {
+              sendPM(target, "*sighs* Am I an actual real object?");
+            } else if(param.toUpperCase() === "FUN") {
+              sendPM(target, "We need Pinkie Pie over here! D:");
+            } else if(param.toUpperCase() === "SOMETHING") {
+              sendPM(target, "Haha, very clever. Try something else.");
+            } else if(param.toUpperCase() === "SOMETHING" && simplified[2].toUpperCase() === "ELSE") {
+              sendPM(target, "Very funny.");
+            } else if(param.toUpperCase() === "SOCKS" || param.toUpperCase() === "SEXY") {
+              bot.action(target, "puts on socks and scrunches")
+            } else if(param.toUpperCase() === "RADIO") {
+              bot.action(target, "silently headbangs for no reason")
             } else {
             	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
             }
@@ -288,7 +314,7 @@ var commands = {
 /*
     ===================
     NICKNAME UTILITIES!
-    ===================    
+    ===================
 */
 var nicks = {};
 var iconvert = {};
@@ -514,7 +540,7 @@ function listRulesForChannel(onChannel) {
     }
 }
 
-// Grab JSON from an url 
+// Grab JSON from an url
 function JSONGrabber(url, callback) {
     http.get(url, function(res){
         var data = '';
@@ -694,7 +720,7 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
         } else if(link.indexOf("youtube.com") !== -1) {
         var det = link.match("[\\?&]v=([^&#]*)")[1];
             if(det) {
-            youtube.video(det).details(function(ne, tw) { if( ne instanceof Error ) { mylog("Error in getting youtube url!") } else { sendPM(target, "YouTube video \""+tw.title+"\" Uploaded by \""+tw.uploader+"\" Views: "+tw.viewCount);}}); 
+            youtube.video(det).details(function(ne, tw) { if( ne instanceof Error ) { mylog("Error in getting youtube url!") } else { sendPM(target, "YouTube video \""+tw.title+"\" Uploaded by \""+tw.uploader+"\" Views: "+tw.viewCount);}});
             }
         } else if(link.indexOf("dailymotion.com/video/") !== -1) {
             var det = link.match("/video/([^&#]*)")[1];
@@ -707,7 +733,7 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
     }
     else if(isMentioned) {
     	var roll = randomize(1,9);
-    	var messageToSend = "Error. Roll # is: "+roll;
+    	var messageToSend = "For some reason, an error happened. :O For reference, Roll # is: "+roll;
     	switch(roll) {
     		case 1:
             	messageToSend = "Oh, hey "+nick+"!";
@@ -860,10 +886,10 @@ bot.on('join', function (channel, nick) {
         mylog((" --> ".green.bold)+"You joined channel "+channel.bold);
         rl.setPrompt(util.format("> ".bold.magenta), 2);
         if(nickServ == true) {
-			sendPM("NickServ", "identify "+nickPassword);
-			mylog((" --> ".green.bold)+"Identified! "+channel.bold);
-			sendPM(channel, "I'm baack!");
-		}
+			      sendPM("NickServ", "identify "+nickPassword);
+			      mylog((" --> ".green.bold)+"Identified! "+channel.bold);
+			      sendPM(channel, "I'm baack!");
+		    }
 
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
@@ -1034,7 +1060,7 @@ function readableTime(timems, ignoreMs) {
     else if (time < 3600) return zf(time / 60|0)+"m "+zf(time % 60)+ms+"s";
     else if (time < 86400) return zf(time / 3600|0)+"h "+zf((time % 3600)/60|0)+"m "+zf((time % 3600)%60)+ms+"s";
     else return (time / 86400|0)+"d "+zf((time % 86400)/3600|0)+"h "+zf((time % 3600)/60|0)+"m "+zf((time % 3600)%60)+"s";
-} 
+}
 function randomize(bottom, top) {
     return Math.floor( Math.random() * ( 1 + top - bottom ) ) + bottom;
 }
