@@ -294,7 +294,7 @@ var commands = {
               sendPM(target, "*sighs* Am I an actual real object?");
             } else if(param.toUpperCase() === "FUN") {
               sendPM(target, "We need Pinkie Pie over here! D:");
-            } else if(param.toUpperCase() === "SOMETHING") {
+            } else if(param.toUpperCase() === "SOMETHING" && simplified[2].toUpperCase() === null) {
               sendPM(target, "Haha, very clever. Try something else.");
             } else if(param.toUpperCase() === "SOMETHING" && simplified[2].toUpperCase() === "ELSE") {
               sendPM(target, "Very funny.");
