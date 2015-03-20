@@ -22,6 +22,7 @@ var gamedig = require('gamedig');
 var events = require("events");
 var emitter = new events.EventEmitter();
 var settings = require(__dirname+"/settings.json");
+var usersSet = [];
 
 // Config
 var SERVER = settings.server;       // The server we want to connect to
@@ -184,6 +185,53 @@ var commands = {
             sendPM(target, irc.colors.wrap("dark_red",nick+": Please provide me with episode number and season, for example: !ep s4e4"));
         }
     }),"description":"s<Season> e<Episode Number> - Open a pony episode"},
+    
+    "statusof":{"action":(function(simplified, nick, chan, message, target) {
+        var array = message.split(" ");
+        var param = array[1]; 
+        if(param != null) { 
+        	if(usersSet != []){
+            	if(usersSet[param] != null) {
+            		sendPM(nick, param + "'s status:"+irc.colors.wrap("bold",usersSet[param]));
+            	} else {
+            		sendPM(nick, param + " has not set a status.");
+            	}
+            } else {
+            	sendPM(nick, param + " has not set a status.");
+            }
+        } else {
+            sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a user. Example: !statusof <user>"));
+        }
+    }),"description":"Check the status of a user."},
+    
+    "setstatus":{"action":(function(simplified, nick, chan, message, target) {
+        var array = message.split(" ");
+        var previousStatus;
+        var param = array[1];
+        if(param != null) { 
+        delete array[0];
+        param = array.join(" "); 
+        	if(array[1] === "-r") {
+        		if(!usersSet.hasOwnProperty(nick)) {
+        			sendPM(nick, "You need to have a status to remove it, so nothing was removed. :P");
+        		} else {
+        			previousStatus = usersSet[nick];
+        			delete usersSet[nick];
+        			sendPM(nick, "Your status, \""+irc.colors.wrap("bold",previousStatus)+"\", has been deleted from the status database.");
+        		}
+        	} else {
+        		var lengthOfParam = param.length;
+        		if(lengthOfParam > 120) {
+        			sendPM(nick, "Status has been shortened from "+lengthOfParam+" characters to 120 characters.");
+        		}
+				usersSet[nick] = param.substring(0, 121);
+				sendPM(nick, "Status added as:"+irc.colors.wrap("bold",usersSet[nick]));
+				sendPM(chan, nick + "'s new status:"+irc.colors.wrap("bold",usersSet[nick]));
+			}
+        } else {
+            sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a status. Example: \"!setstatus <message>\" or to remove, type \"!setstatus -r\""));
+        }
+    }),"description":"Set a status message."},
     
     "t":{"action":(function(simplified, nick, chan, message, target) {
         var param = simplified[1]; 
@@ -856,7 +904,7 @@ bot.on('part', function (channel, nick, reason) {
 bot.on('quit', function (nick, reason, channels) {
     mylog((" <-- ".red.bold)+'%s has quit (%s)', nick.bold, reason);
     emitter.emit('newIrcMessage', nick, "", " has quit ("+reason+")", "QUIT");
-    sendPM(channel, "Bye, "+nick+"!");
+    //sendPM(channel, "Bye, "+nick+"!");
     IHandleQuit(nick);
 });
 bot.on('names', function(channel, nicks) {

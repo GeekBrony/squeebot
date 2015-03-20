@@ -1,6 +1,7 @@
-# Squeebot
+# Squeebot-TwiBot
 
-This is a [node.js](http://nodejs.org/) powered IRC bot made by [LunaSquee](https://github.com/LunaSquee) and [djazz](https://github.com/daniel-j) and modified by [GeekBrony](https://github.com/geekbrony)
+This is a [node.js](http://nodejs.org/) powered IRC bot originally made by [LunaSquee](https://github.com/LunaSquee) and [djazz](https://github.com/daniel-j).
+Modified by [GeekBrony](https://github.com/geekbrony)
 
 ### Getting started
 1. Clone this repo
@@ -8,27 +9,8 @@ This is a [node.js](http://nodejs.org/) powered IRC bot made by [LunaSquee](http
 3. See the instructions below on how to create the settings file
 4. Run the bot `npm start`
 
-### Requirements
-You must create a file called `settings.json` that has your bot's nickname, password and some other settings.
-
-Template:
-```
-{
-    "username": "Squeebot",
-    "password": "*****",
-    "server": "irc.canternet.org",
-    "port": 6667,
-    "channel": "#Bronydom",
-    "prefix":"!",
-    "command":null,
-    "nickserv":false,
-    "nickpass":"*******",
-
-    "enableRelay": false,
-    "relayPort": 9977,
-    "relayPassword": "*******"
-}
-```
+### Create the settings file
+Make a copy of `example.settings.json` and rename it to `settings.json`. Edit the file as necessary.
 
 **Leave irc password as null if no password.**
 
