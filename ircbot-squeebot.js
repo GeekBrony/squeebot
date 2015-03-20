@@ -200,7 +200,7 @@ var commands = {
             	sendPM(nick, param + " has not set a status.");
             }
         } else {
-            sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a user. Example: !statusof <user>"));
+            sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a user. Example: \""+PREFIX+"statusof <user>\""));
         }
     }),"description":"Check the status of a user."},
     
@@ -229,7 +229,7 @@ var commands = {
 				sendPM(chan, nick + "'s new status:"+irc.colors.wrap("bold",usersSet[nick]));
 			}
         } else {
-            sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a status. Example: \"!setstatus <message>\" or to remove, type \"!setstatus -r\""));
+            sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a status. Example: \""+PREFIX+"setstatus <message>\" or to remove, type \""+PREFIX+"setstatus -r\""));
         }
     }),"description":"Set a status message."},
     
@@ -482,7 +482,7 @@ function listCommands(target, nick) {
         var obj = commands[command];
         if("description" in obj) {
             variab = !variab;
-            listofem.push("\u0002"+irc.colors.wrap((variab?"dark_green":"light_green"), "!"+command));
+            listofem.push("\u0002"+irc.colors.wrap((variab?"dark_green":"light_green"), PREFIX+command));
         }
     }
     comms.push(listofem.join(", "));
