@@ -1,12 +1,12 @@
 {
-  "name": "Squeebot",
-  "description": "Node.js powered IRC bot",
-  "author": "Evert Prants",
-  "version": "0.1.6",
+  "name": "squeebot-twibot",
+  "description": "The IRC bot of GeekBrony (located on #Bronydom)",
+  "author": "Cameron 'GeekBrony' Kilgore",
+  "version": "0.1",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git://github.com/LunaSquee/squeebot.git"
+    "url": "git://github.com/GeekBrony/squeebot-twibot.git"
   },
   "dependencies": {
     "colors": "1.0.3",
