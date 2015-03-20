@@ -22,7 +22,6 @@ var gamedig = require('gamedig');
 var events = require("events");
 var emitter = new events.EventEmitter();
 var settings = require(__dirname+"/settings.json");
-var usersSet = [];
 
 // Config
 var SERVER = settings.server;       // The server we want to connect to
@@ -32,9 +31,10 @@ var IDENT = settings.password;      // Password of the bot. Set to null to not u
 var REALNAME = 'GeekBrony\'s Bot';  // Real name of the bot
 var CHANNEL = settings.channel;     // The default channel for the bot
 var PREFIX = settings.prefix;       // The prefix of commands
-var COMMAND = settings.command;		// Command to Run on Login
+var COMMAND = settings.command;		  // Command to Run on Login
 var nickServ = settings.nickserv;
 var nickPassword = settings.nickpass;
+var usersSet = [];
 // Episode countdown
 var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, minute, second (UTC)
 var week = 7*24*60*60*1000;
@@ -57,7 +57,7 @@ var commands = {
                 if(cmdDesc) {
                     sendPM(target, nick+": \u0002"+PREFIX+cmdName+"\u000f "+cmdDesc);
                 } else {
-                    sendPM(target, nick+": \u0002"+PREFIX+cmdName+"\u000f - Undefined command!");
+                    sendPM(target, nick+": \u0002"+PREFIX+cmdName+"\u000f - There is no set description for this command.");
                 }
             } else {
                 sendPM(target, nick+": That is not a known command!");
@@ -99,22 +99,30 @@ var commands = {
         })
     }), "description":"- Tune in to Bronydom Radio"},
 
+    "rq":{"action":(function(simplified, nick, chan, message, target) {
+        sendPM(target, nick+", go here to request things on the radio: http://req.bronydom.net/ (Doesn't work on live shows)");
+    }), "description":"- Request Link"},
+
     "yay":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": http://flutteryay.com")
-    })},
+    }), "description":"- Fluttershy: Yaaaay"},
 
     "squee":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": https://www.youtube.com/watch?v=O1adNgZl_3Q")
-    })},
+    }), "description":"- Fluttershy: Squee"},
 
     "hug":{"action":(function(simplified, nick, chan, message, target) {
-        sendPM(target, "* hugs "+nick+" *");
-    })},
+        bot.action(target, "hugs "+nick);
+    }), "description":"Hugs for everyone :)"},
+
+    "ping":{"action":(function(simplified, nick, chan, message, target) {
+        sendPM(nick, "pong");
+    }), "description":"Ping -> Pong"},
 
     "moon":{"action":(function(simplified, nick, chan, message, target) {
         //bot.kick(chan, nick, "TO THE MOOOOON!");
         bot.send("kick", chan, nick, "TO THE MOOOOON!")
-    })},
+    }), "description":"Do you like bananas?"},
 
     "viewers":{"action":(function(simplified, nick, chan, message, target) {
         livestreamViewerCount((function(r) {
@@ -133,7 +141,7 @@ var commands = {
         } else {
             sendPM(target, "Next Season 5 episode airs in %s", readableTime(timeLeft, true));
         }
-    }),"description":"- Time left until next pony episode."},
+    }),"description":"- Time left until next pone episode."},
 
     "episodes":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": List of all MLP:FiM Episodes: http://mlp-episodes.tk/");
@@ -272,7 +280,7 @@ var commands = {
             } else if(param.toUpperCase() === "PINKIE" && simplified[2].toUpperCase() === "PIE") {
             	sendPM(target, "Where's Pinkie? Did she break the fourth wall again?");
             } else if(param.toUpperCase() === "TWILIGHT" && simplified[2].toUpperCase() === "SPARKLE") {
-            	sendPM(target, "Uuhh, why would I talk about me?");
+            	sendPM(target, "Uuhh, why would I talk about me??");
             } else if(param.toUpperCase() === "THE" && simplified[2].toUpperCase() === "DRESS") {
             	sendPM(target, "Obviously, it's Blue and Black...or is it White and Gold?");
             	bot.action(target, "starts sweating uncontrollably")
@@ -294,7 +302,7 @@ var commands = {
               sendPM(target, "*sighs* Am I an actual real object?");
             } else if(param.toUpperCase() === "FUN") {
               sendPM(target, "We need Pinkie Pie over here! D:");
-            } else if(param.toUpperCase() === "SOMETHING" && simplified[2] === null) {
+            } else if(param.toUpperCase() === "SOMETHING" && !(simplified.hasOwnProperty(2))) {
               sendPM(target, "Haha, very clever. Try something else.");
             } else if(param.toUpperCase() === "SOMETHING" && simplified[2].toUpperCase() === "ELSE") {
               sendPM(target, "Very funny.");
@@ -302,6 +310,21 @@ var commands = {
               bot.action(target, "puts on socks and scrunches");
             } else if(param.toUpperCase() === "RADIO") {
               bot.action(target, "silently headbangs for no reason");
+            } else if(param.toUpperCase() === "ILLUMINATI") {
+              var illuminatiChat = [];
+              bot.action(target, "gasps");
+              illuminatiChat.push("Half-Life 3 was the illuminati's plan!");
+              illuminatiChat.push("There are exactly THREE sides to a triangle.");
+              illuminatiChat.push("Half-Life 1 totally has next-gen MLG graphics.");
+              illuminatiChat.push("Illuminati is a triangle. Illuminati has one eye.");
+              illuminatiChat.push("ILLUMINATI CONFIRMED!");
+              sendWithDelay(illuminatiChat, target, 1500);
+            } else if(param.toUpperCase() === "CLOP") {
+              bot.action(target, "clops hooves together repeatedly");
+            } else if(param.toUpperCase() === "NO") {
+              sendPM(target, "nopony says no to me! D:");
+            } else if(param.toUpperCase() === "YES") {
+              sendPM(target, ";)");
             } else {
             	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
             }
@@ -710,6 +733,8 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
         var command = commands[simplified[0].toLowerCase().substring(1)];
         if("action" in command)
             command.action(simplified, nick, chan, message, target, isMentioned, isPM);
+    }else if(simplified[1] != null && simplified[1].toUpperCase() === "TIME") {
+        sendPM(target, simplified[0].toUpperCase()+" TIME!!! :D")
     }else if(findUrls(message).length > 0) {
         var link = findUrls(message)[0];
         if(link.indexOf("youtu.be") !== -1) {
@@ -888,14 +913,22 @@ bot.on('join', function (channel, nick) {
         if(nickServ == true) {
 			      sendPM("NickServ", "identify "+nickPassword);
 			      mylog((" --> ".green.bold)+"Identified! "+channel.bold);
-			      sendPM(channel, "I'm baack!");
 		    }
-
+        if(COMMAND != null) {
+          //var cA = COMMAND.split(" ");
+          //bot.send(cA[0]);
+        }
+        var randomInt = randomize(0,4);
+        if(randomInt === 0) sendPM(channel, "I'm baack!");
+        if(randomInt === 1) sendPM(channel, "Woah, where was I?");
+        if(randomInt === 2) sendPM(channel, "*sigh* It's great to be back!");
+        if(randomInt === 3) sendPM(channel, "I hope nobody thought I would be away forever!");
+        if(randomInt === 4) sendPM(channel, "I'm alive? I am! Heheh..");
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
-        if(nick.toUpperCase === "GEEKBRONY" || nick.toUpperCase === "GB") {
-        	sendPM(channel, nick+", the brony who made me, is back! :D");
+        if(nick.toUpperCase() === "GEEKBRONY") {
+        	sendPM(channel, nick+", my developer, is back! :D");
         } else {
         	sendPM(channel, "Hello, "+nick+"!");
         }
@@ -990,7 +1023,7 @@ rl.on('line', function (line) {
         bot.join(chan);
     } else if (line.indexOf('/part ') === 0) {
         var chan = line.substr(6);
-        bot.part(chan, NICK+" goes bye bye from this channel.");
+        bot.part(chan, NICK+" I'll be back.");
     } else if (line.indexOf('/me ') === 0) {
         var msg = line.substr(4);
         bot.action(CHANNEL, msg);
