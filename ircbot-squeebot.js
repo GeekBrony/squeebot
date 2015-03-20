@@ -299,9 +299,9 @@ var commands = {
             } else if(param.toUpperCase() === "SOMETHING" && simplified[2].toUpperCase() === "ELSE") {
               sendPM(target, "Very funny.");
             } else if(param.toUpperCase() === "SOCKS" || param.toUpperCase() === "SEXY") {
-              bot.action(target, "puts on socks and scrunches")
+              bot.action(target, "puts on socks and scrunches");
             } else if(param.toUpperCase() === "RADIO") {
-              bot.action(target, "silently headbangs for no reason")
+              bot.action(target, "silently headbangs for no reason");
             } else {
             	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
             }
