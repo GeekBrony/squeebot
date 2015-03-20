@@ -894,7 +894,7 @@ bot.on('join', function (channel, nick) {
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
-        if(nick.toUpperCase == "GeekBrony" || nick.toUpperCase == "GB") {
+        if(nick.toUpperCase === "GEEKBRONY" || nick.toUpperCase === "GB") {
         	sendPM(channel, nick+", the brony who made me, is back! :D");
         } else {
         	sendPM(channel, "Hello, "+nick+"!");
