@@ -1,5 +1,5 @@
 {
-    "username": "SqueeBot",
+    "username": "TwiBot",
     "password": null,
     "server": "irc.canternet.org",
     "port": 6667,
@@ -8,6 +8,8 @@
     "command":null,
     "nickserv":false,
     "nickpass":"",
+
+    "twitter_enabled":false,
 
     "enableRelay": false,
     "relayPort": 9977,

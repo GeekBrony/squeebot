@@ -2,12 +2,8 @@
 'use strict';
 // IRC bot by LunaSquee (Originally djazz, best poni :3)
 
-/*
-
-TODO
-
+/* TODO
 - Command to run on login
-
 */
 
 // Modules
@@ -20,8 +16,10 @@ var readline = require('readline');
 var youtube = require('youtube-feeds');
 var gamedig = require('gamedig');
 var events = require("events");
+var Twitter = require("twitter")
 var emitter = new events.EventEmitter();
 var settings = require(__dirname+"/settings.json");
+
 
 // Config
 var SERVER = settings.server;       // The server we want to connect to
@@ -34,6 +32,15 @@ var PREFIX = settings.prefix;       // The prefix of commands
 var COMMAND = settings.command;		  // Command to Run on Login
 var nickServ = settings.nickserv;
 var nickPassword = settings.nickpass;
+
+var TWITTER_ENABLED = settings.twitter_enabled || false;
+if(TWITTER_ENABLED){
+  var tsettings = require(__dirname+"/twitter_settings.json");
+  var TWITTER_CONSUMER_KEY = tsettings.consumer_key || "";
+  var TWITTER_CONSUMER_SECRET = tsettings.consumer_secret || "";
+  var TWITTER_ACCESS_KEY = tsettings.access_key || "";
+  var TWITTER_ACCESS_SECRET = tsettings.access_secret || "";
+}
 var usersSet = [];
 // Episode countdown
 var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, minute, second (UTC)
@@ -211,6 +218,18 @@ var commands = {
             sendPM(nick, irc.colors.wrap("dark_red","Error: Please provide a user. Example: \""+PREFIX+"statusof <user>\""));
         }
     }),"description":"Check the status of a user."},
+
+    "showtweet":{"action":(function(simplified, nick, chan, message, target) {
+
+        var param = simplified[1];
+        if(TWITTER_ENABLED) {
+          //sendPM(target, param);
+          getTweet(param, target);
+        } else {
+          sendPM(target, nick + ": Twitter features not enabled.");
+        }
+
+    }),"description":"Show the contents of a tweet's ID."},
 
     "setstatus":{"action":(function(simplified, nick, chan, message, target) {
         var array = message.split(" ");
@@ -610,6 +629,14 @@ function getCurrentSong(callback) {
     });
 }
 
+function getTweet(tweetID, target) {
+  tw.get('statuses/show/', {id: tweetID}, function(error, tweet, response){
+    if(error) sendPM(target, "Error: " + error);
+    sendPM(target, irc.colors.wrap("bold","@"+tweet.user.screen_name)+": "+tweet.text.replace("\n", " "));
+    //console.log(Object.keys(tweet.user.screen_name)); //Development Test
+  });
+}
+
 // Gameserver info (This function makes me puke)
 function getGameInfo(game, host, callback, additional) {
     Gamedig.query(
@@ -721,6 +748,8 @@ function findUrls(text) {
             urlArray.push(token);
         } else if(token.indexOf("dailymotion.com/video/") !== -1) {
             urlArray.push(token);
+        } else if(token.indexOf("twitter.com/") !== -1 && token.indexOf("/status/") !== -1) {
+              urlArray.push(token);
         }
     }
     return urlArray;
@@ -754,13 +783,22 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
                     sendPM(target, "Dailymotion video \""+data.title+"\" Uploaded by \""+data["owner.screenname"]+"\"");
                 }))
             }
+        } else if(link.indexOf("twitter.com/") !== -1) {
+          if(TWITTER_ENABLED) {
+            var det = link.match("/status/([^&#]*)")[1];
+            if(det) {
+                getTweet(det, target);
+            }
+          } else {
+            //sendPM(target, nick + ": Twitter features not enabled.");
+          }
         }
     }
     else if(isMentioned) {
     	var roll = randomize(1,9);
     	var messageToSend = "For some reason, an error happened. :O For reference, Roll # is: "+roll;
     	switch(roll) {
-    		case 1:
+    		  case 1:
             	messageToSend = "Oh, hey "+nick+"!";
             	break;
         	case 2:
@@ -892,6 +930,14 @@ var bot = new irc.Client(SERVER, NICK, {
 var lasttopic = "";
 var lasttopicnick = "";
 
+// Load Twitter Module
+var tw = new Twitter({
+  consumer_key: TWITTER_CONSUMER_KEY,
+  consumer_secret: TWITTER_CONSUMER_SECRET,
+  access_token_key: TWITTER_ACCESS_KEY,
+  access_token_secret: TWITTER_ACCESS_SECRET
+});
+
 bot.on('error', function (message) {
     info('ERROR: %s: %s', message.command, message.args.join(' '));
 });
@@ -1006,7 +1052,7 @@ rl.on('line', function (line) {
         return;
     }
     if (line.indexOf('/quit') === 0) {
-        var msg = line.substring(6) || "Quitting...";
+        var msg = line.substring(6) || "I'll be back later. I'm restarting.";
         info("Quitting...");
         rl.setPrompt("");
         bot.disconnect(msg, function () {
@@ -1030,7 +1076,7 @@ rl.on('line', function (line) {
     } else if (line === '/topic') {
         logTopic(CHANNEL, lasttopic, lasttopicnick);
     } else if (line.indexOf("/") === 0) {
-        info(("Unknown command "+line.substr(1).bold).red);
+        info(("Unknown command: "+line.substr(1).bold).red);
     } else {
         sendChat(formatmesg(line));
     }
