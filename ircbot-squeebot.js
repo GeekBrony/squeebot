@@ -47,6 +47,8 @@ var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, min
 var week = 7*24*60*60*1000;
 var seasonEpCount = 26;
 
+var failed = false;
+
 // Rules for individual channels.
 var rules = {"#bronydom":["You can read the rules at http://goo.gl/8822BD"]};
 
@@ -299,20 +301,26 @@ var commands = {
             } else if(param.toUpperCase() === "RADIO") {
               bot.action(target, "silently headbangs for no reason");
             } else if(param.toUpperCase() === "ILLUMINATI") {
-              var illuminatiChat = [];
-              bot.action(target, "gasps");
-              illuminatiChat.push("Half-Life 3 was the illuminati's plan!");
-              illuminatiChat.push("There are exactly THREE sides to a triangle.");
-              illuminatiChat.push("Half-Life 1 totally has next-gen MLG graphics.");
-              illuminatiChat.push("Illuminati is a triangle. Illuminati has one eye.");
-              illuminatiChat.push("ILLUMINATI CONFIRMED!");
-              sendWithDelay(illuminatiChat, target, 1500);
+                var illuminatiChat = [];
+                bot.action(target, "gasps");
+                illuminatiChat.push("Half-Life 3 was the illuminati's plan!");
+                illuminatiChat.push("There are exactly THREE sides to a triangle.");
+                illuminatiChat.push("Half-Life 1 totally has next-gen MLG graphics.");
+                illuminatiChat.push("Illuminati is a triangle. Illuminati has one eye.");
+                illuminatiChat.push("ILLUMINATI CONFIRMED!");
+                sendWithDelay(illuminatiChat, target, 1500);
             } else if(param.toUpperCase() === "CLOP") {
               bot.action(target, "clops hooves together repeatedly");
             } else if(param.toUpperCase() === "NO") {
               sendPM(target, "nopony says no to me! D:");
             } else if(param.toUpperCase() === "YES") {
               sendPM(target, ";)");
+            } else if(param.toUpperCase() === "YOU" && simplified[2].toUpperCase() === "FAILED") {
+              sendPM(target, "...");
+              failed = true;
+            } else if(param.toUpperCase() === "YOU" && simplified[2].toUpperCase() === "WON") {
+              failed = false;
+              sendPM(target, ":D");
             } else {
             	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
             }
@@ -992,18 +1000,37 @@ function info() {
 }
 
 function sendChat() {
-    var message = util.format.apply(null, arguments);
-    logChat(NICK, CHANNEL, message);
-    bot.say(CHANNEL, message);
+
+    if(failed) {
+          var message = util.format.apply(null, arguments);
+          logChat(NICK, CHANNEL, message);
+          bot.say(CHANNEL, randomstring());
+    } else {
+      var message = util.format.apply(null, arguments);
+      logChat(NICK, CHANNEL, message);
+      bot.say(CHANNEL, message);
+    }
 }
 function sendPM(target) {
-    if (target === CHANNEL) {
-        sendChat.apply(null, Array.prototype.slice.call(arguments, 1));
-        return;
-    }
-    var message = util.format.apply(null, Array.prototype.slice.call(arguments, 1));
-    logPM(NICK+" -> "+target, message);
-    bot.say(target, message);
+  if(failed) {
+        console.log("you won");
+        if (target === CHANNEL) {
+            sendChat.apply(null, Array.prototype.slice.call(arguments, 1));
+            return;
+        }
+        var message = util.format.apply(null, Array.prototype.slice.call(arguments, 1));
+        logPM(NICK+" -> "+target, message);
+        bot.say(target, randomstring());
+  } else {
+
+        if (target === CHANNEL) {
+            sendChat.apply(null, Array.prototype.slice.call(arguments, 1));
+            return;
+        }
+        var message = util.format.apply(null, Array.prototype.slice.call(arguments, 1));
+        logPM(NICK+" -> "+target, message);
+        bot.say(target, message);
+  }
 }
 function logChat(nick, chan, message, isMentioned) {
     if (isMentioned) {
@@ -1035,4 +1062,15 @@ function readableTime(timems, ignoreMs) {
 }
 function randomize(bottom, top) {
     return Math.floor( Math.random() * ( 1 + top - bottom ) ) + bottom;
+}
+function randomstring()
+{
+    var inte = randomize(6,15);
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < inte; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
 }
