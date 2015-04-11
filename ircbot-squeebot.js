@@ -45,6 +45,7 @@ var usersSet = [];
 // Episode countdown
 var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, minute, second (UTC)
 var week = 7*24*60*60*1000;
+var seasonEpCount = 26;
 
 // Rules for individual channels.
 var rules = {"#bronydom":["You can read the rules at http://goo.gl/8822BD"]}
@@ -75,7 +76,7 @@ var commands = {
     }), "description":"<command> - Show command description"},
 
     "infoc":{"action":(function(simplified, nick, chan, message, target) {
-        sendPM(target, nick+": Bronydom Network (bronydom.net) Official IRC Chat | Created by GeekBrony | Bot originally made by LunaSquee and djazz");
+        sendPM(target, nick+": Bronydom Network (bronydom.net) Official IRC Chat | Bot originally made by LunaSquee and djazz, but modified for BDN by GeekBrony");
     }), "description":"- Channel Information"},
 
     "rules":{"action":(function(simplified, nick, chan, message, target, mentioned, pm) {
@@ -89,7 +90,7 @@ var commands = {
     "np":{"action":(function(simplified, nick, chan, message, target) {
         getCurrentSong(function(d, e, f, i) {
             if(i) {
-                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/popup/radio.php")
+                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/radio")
             } else {
                 sendPM(target, d)
             }
@@ -99,7 +100,7 @@ var commands = {
     "radio":{"action":(function(simplified, nick, chan, message, target) {
         getCurrentSong(function(d, e, f, i) {
             if(i) {
-                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/popup/radio.php")
+                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/radio")
             } else {
                 sendPM(target, d)
             }
@@ -107,7 +108,7 @@ var commands = {
     }), "description":"- Tune in to Bronydom Radio"},
 
     "rq":{"action":(function(simplified, nick, chan, message, target) {
-        sendPM(target, nick+", go here to request things on the radio: http://req.bronydom.net/ (Doesn't work on live shows)");
+        sendPM(target, nick+", go here to request things on the radio: http://www.bronydom.net/request (Doesn't work on live shows)");
     }), "description":"- Request Link"},
 
     "yay":{"action":(function(simplified, nick, chan, message, target) {
@@ -142,8 +143,8 @@ var commands = {
         var now = Date.now();
         do {
             var timeLeft = Math.max(((airDate+week*(counter++)) - now)/1000, 0);
-        } while (timeLeft === 0 && counter < 26);
-        if (counter === 26) {
+        } while (timeLeft === 0 && counter < seasonEpCount);
+        if (counter === seasonEpCount) {
             sendPM(target, "Season 5 is over :(");
         } else {
             sendPM(target, "Next Season 5 episode airs in %s", readableTime(timeLeft, true));
@@ -153,38 +154,6 @@ var commands = {
     "episodes":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": List of all MLP:FiM Episodes: http://mlp-episodes.tk/");
     }),"description":"- List of pony episodes"},
-
-    "minecraft":{"action":(function(simplified, nick, chan, message, target) {
-        var reqplayers = false;
-
-        if(simplified[1] === "players") {
-            reqplayers = true;
-        }
-
-        getGameInfo("minecraft", "play.bronydom.net", function(err, msg) {
-            if(err) {
-                sendPM(target, err);
-                return;
-            }
-            sendPM(target, msg);
-        }, reqplayers);
-    }),"description":"[players] - Information about our Minecraft Server"},
-
-    "mc":{"action":(function(simplified, nick, chan, message, target) {
-        var reqplayers = false;
-
-        if(simplified[1] === "players") {
-            reqplayers = true;
-        }
-
-        getGameInfo("minecraft", "play.bronydom.net", function(err, msg) {
-            if(err) {
-                sendPM(target, err);
-                return;
-            }
-            sendPM(target, msg);
-        }, reqplayers);
-    })},
 
     "episode":{"action":(function(simplified, nick, chan, message, target) {
         var param = simplified[1];
@@ -369,7 +338,6 @@ function INicksGetMode(nickname, onChannel) {
         }
     }
 }
-
 function IChannelNames(onChannel, namesObj) {
     var channel = onChannel.toLowerCase();
     var initial = {}
@@ -386,7 +354,6 @@ function IHandleJoin(nickname, onChannel) {
         nicks[channel][nickname] = "";
     }
 }
-
 function IHandlePart(nickname, onChannel) {
     var channel = onChannel.toLowerCase();
     if(channel in nicks) {
@@ -395,7 +362,6 @@ function IHandlePart(nickname, onChannel) {
         }
     }
 }
-
 function IHandleQuit(nickname) {
     for(var key in nicks) {
         var obj = nicks[key];
@@ -404,7 +370,6 @@ function IHandleQuit(nickname) {
         }
     }
 }
-
 function IHandleModeAdded(nickname, mode, onChannel) {
     if(mode!="q" && mode!="a" && mode!="o" && mode!="h" && mode!="v") return;
     var channel = onChannel.toLowerCase();
@@ -418,7 +383,6 @@ function IHandleModeAdded(nickname, mode, onChannel) {
         }
     }
 }
-
 function IHandleModeRemoved(nickname, mode, onChannel) {
     if(mode!="q" && mode!="a" && mode!="o" && mode!="h" && mode!="v") return;
     var channel = onChannel.toLowerCase();
@@ -429,7 +393,6 @@ function IHandleModeRemoved(nickname, mode, onChannel) {
         }
     }
 }
-
 function IHandleNickChange(oldNick, newNick) {
     emitter.emit('newIrcMessage', oldNick, "", " is now known as "+newNick, "NICK");
     for(var key in nicks) {
@@ -441,13 +404,11 @@ function IHandleNickChange(oldNick, newNick) {
         }
     }
 }
-
 function ILeftAChannel(channel) {
     if(channel.toLowerCase() in nicks) {
         delete nicks[channel.toLowerCase()];
     }
 }
-
 iconvert.isChannelOP = (function(username, channel) {
     if(channel in nicks) {
         var chanobj = nicks[channel];
@@ -632,79 +593,9 @@ function getCurrentSong(callback) {
 function getTweet(tweetID, target) {
   tw.get('statuses/show/', {id: tweetID}, function(error, tweet, response){
     if(error) sendPM(target, "Error: " + error);
-    sendPM(target, irc.colors.wrap("bold","@"+tweet.user.screen_name)+": "+tweet.text.replace("\n", " "));
+    sendPM(target, irc.colors.wrap("bold","@"+tweet.user.screen_name)+": "+tweet.text.replace("\n", " ! "));
     //console.log(Object.keys(tweet.user.screen_name)); //Development Test
   });
-}
-
-// Gameserver info (This function makes me puke)
-function getGameInfo(game, host, callback, additional) {
-    Gamedig.query(
-    {
-        type: game,
-        host: host
-    },
-        function(state) {
-            if(state.error) callback("Server is offline!", null);
-            else {
-                switch(game) {
-                    case "tf2":
-                        if(additional) {
-                            callback(null, "[!Team Fortress 2] " + (typeof(additional) === "object" ? state[additional[0]][additional[1]] : state[additional]));
-                        } else {
-                            callback(null, "[Team Fortress 2] IP: "+host+" MOTD: \""+state.name+"\" Players: "+state.raw.numplayers+"/"+state.maxplayers);
-                        }
-                        break;
-                    case "minecraft":
-                        if(additional!=null && additional === true) {
-                            if(state.players.length > 0) {
-                                var players = [];
-                                state.players.forEach(function(t) {
-                                    players.push(t.name);
-                                });
-                                callback(null, "[Minecraft] Players: "+players.join(", "));
-                            } else {
-                                callback(null, "[Minecraft] No players");
-                            }
-                        } else {
-                            callback(null, "[Minecraft] IP: "+host+" MOTD: \""+state.name+"\" Players: "+state.raw.numplayers+"/"+state.raw.maxplayers);
-                        }
-                        break;
-                    case "mumble":
-                        if(additional!=null && additional === true) {
-                            if(state.players.length > 0) {
-                                var players = [];
-                                // Sort, show most active first
-                                state.players.sort(function (u1, u2) {
-                                    return u1.idlesecs - u2.idlesecs;
-                                });
-                                state.players.forEach(function(t) {
-                                    var isMuted = t.mute || t.selfMute;
-                                    var isDeaf = t.deaf || t.selfDeaf;
-                                    var o = t.name;
-                                    if (isMuted && isDeaf) {
-                                        o = irc.colors.wrap("dark_red", o);
-                                    } else if (isMuted) {
-                                        o = irc.colors.wrap("orange", o);
-                                    } else if (isDeaf) {
-                                        o = irc.colors.wrap("light_blue", o);
-                                    } else {
-                                        o = irc.colors.wrap("light_green", o);
-                                    }
-                                    players.push(o);
-                                });
-                                callback(null, "[Mumble] Users: "+players.join(", "));
-                            } else {
-                                callback(null, "[Mumble] No users ");
-                            }
-                        } else {
-                            callback(null, "[Mumble server] IP: "+host+" Users online: "+state.players.length);
-                        }
-                        break;
-                };
-            }
-        }
-    );
 }
 
 // Dailymotion video puller
@@ -964,12 +855,14 @@ bot.on('join', function (channel, nick) {
           //var cA = COMMAND.split(" ");
           //bot.send(cA[0]);
         }
-        var randomInt = randomize(0,4);
+        var randomInt = randomize(0,6);
         if(randomInt === 0) sendPM(channel, "I'm baack!");
         if(randomInt === 1) sendPM(channel, "Woah, where was I?");
         if(randomInt === 2) sendPM(channel, "*sigh* It's great to be back!");
         if(randomInt === 3) sendPM(channel, "I hope nobody thought I would be away forever!");
         if(randomInt === 4) sendPM(channel, "I'm alive? I am! Heheh..");
+        if(randomInt === 5) sendPM(channel, "and then there was TwiBot.");
+        if(randomInt === 6) sendPM(channel, "Hey, GeekBrony, how are you?");
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
@@ -1007,6 +900,7 @@ bot.on('part', function (channel, nick, reason) {
     }
 });
 bot.on('quit', function (nick, reason, channels) {
+    sendPM(channel, "Bye, "+nick+"!");
     mylog((" <-- ".red.bold)+'%s has quit (%s)', nick.bold, reason);
     emitter.emit('newIrcMessage', nick, "", " has quit ("+reason+")", "QUIT");
     //sendPM(channel, "Bye, "+nick+"!");
@@ -1044,7 +938,7 @@ var rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
-rl.setPrompt("");
+rl.setPrompt(NICK + ": ");
 
 rl.on('line', function (line) {
 
