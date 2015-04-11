@@ -48,7 +48,7 @@ var week = 7*24*60*60*1000;
 var seasonEpCount = 26;
 
 // Rules for individual channels.
-var rules = {"#bronydom":["You can read the rules at http://goo.gl/8822BD"]}
+var rules = {"#bronydom":["You can read the rules at http://goo.gl/8822BD"]};
 
 // This is the list of all your commands.
 // "command":{"action":YOUR FUNCTION HERE, "description":COMMAND USAGE(IF NOT PRESENT, WONT SHOW UP IN !commands)}
@@ -90,7 +90,7 @@ var commands = {
     "np":{"action":(function(simplified, nick, chan, message, target) {
         getCurrentSong(function(d, e, f, i) {
             if(i) {
-                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/radio")
+                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://brony.co/tune")
             } else {
                 sendPM(target, d)
             }
@@ -100,7 +100,7 @@ var commands = {
     "radio":{"action":(function(simplified, nick, chan, message, target) {
         getCurrentSong(function(d, e, f, i) {
             if(i) {
-                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://bronydom.net/radio")
+                sendPM(target, "Now playing: "+d+" | Listeners: "+e+" | Score: "+f+" | Click here to tune in: http://brony.co/tune")
             } else {
                 sendPM(target, d)
             }
@@ -862,7 +862,7 @@ bot.on('join', function (channel, nick) {
         if(randomInt === 3) sendPM(channel, "I hope nobody thought I would be away forever!");
         if(randomInt === 4) sendPM(channel, "I'm alive? I am! Heheh..");
         if(randomInt === 5) sendPM(channel, "and then there was TwiBot.");
-        if(randomInt === 6) sendPM(channel, "Hey, GeekBrony, how are you?");
+        if(randomInt === 6) sendPM(channel, "Hey, how are you guys?");
     } else {
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
@@ -900,7 +900,6 @@ bot.on('part', function (channel, nick, reason) {
     }
 });
 bot.on('quit', function (nick, reason, channels) {
-    sendPM(channel, "Bye, "+nick+"!");
     mylog((" <-- ".red.bold)+'%s has quit (%s)', nick.bold, reason);
     emitter.emit('newIrcMessage', nick, "", " has quit ("+reason+")", "QUIT");
     //sendPM(channel, "Bye, "+nick+"!");
@@ -947,7 +946,7 @@ rl.on('line', function (line) {
     }
     if (line.indexOf('/quit') === 0) {
         var msg = line.substring(6) || "I'll be back later. I'm restarting.";
-        info("Quitting...");
+        info("I'll be back later. I'm restarting.");
         rl.setPrompt("");
         bot.disconnect(msg, function () {
             process.exit(0);
