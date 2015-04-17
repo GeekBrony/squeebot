@@ -43,7 +43,7 @@ if(TWITTER_ENABLED){
 }
 var usersSet = [];
 // Episode countdown
-var airDate = Date.UTC(2015, 4-1, 4, 16, 0, 0); // Year, month-1, day, hour, minute, second (UTC)
+var airDate = Date.UTC(2015, 4-1, 4, 15, 30, 0); // Year, month-1, day, hour, minute, second (UTC)
 var week = 7*24*60*60*1000;
 var seasonEpCount = 26;
 
