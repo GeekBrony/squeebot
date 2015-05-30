@@ -9,6 +9,10 @@
     "nickserv":false,
     "nickpass":"",
 
+    "telnet_enabled":false,
+    "telnet_port":1234,
+    "telnet_host":"localhost",
+
     "twitter_enabled":false,
 
     "enableRelay": false,

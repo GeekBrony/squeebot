@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-// IRC bot by LunaSquee (Originally djazz, best poni :3)
+// IRC bot by GeekBrony (Originally LunaSquee and djazz)
 
 /* TODO
 - Command to run on login
@@ -16,10 +16,13 @@ var readline = require('readline');
 var youtube = require('youtube-feeds');
 var gamedig = require('gamedig');
 var events = require("events");
-var Twitter = require("twitter")
+var Twitter = require("twitter");
+var fs = require('fs');
+//var tracklist = require("tracklist");
 var emitter = new events.EventEmitter();
 var settings = require(__dirname+"/settings.json");
 
+var rqTrackList;
 
 // Config
 var SERVER = settings.server;       // The server we want to connect to
@@ -32,6 +35,16 @@ var PREFIX = settings.prefix;       // The prefix of commands
 var COMMAND = settings.command;		  // Command to Run on Login
 var nickServ = settings.nickserv;
 var nickPassword = settings.nickpass;
+var TELNET_ENABLE = settings.telnet_enabled || false;
+var TELNET_PORT = settings.telnet_port || 1234;
+var TELNET_HOST = settings.telnet_host || "localhost";
+var twibotSource = "https://github.com/GeekBrony/squeebot-twibot";
+var OWNER = "GeekBrony";
+var MUSICDIR = "/srv/music/";
+
+process.on('uncaughtException', function(err) {
+  console.log(err.stack);
+})
 
 var TWITTER_ENABLED = settings.twitter_enabled || false;
 if(TWITTER_ENABLED){
@@ -42,6 +55,7 @@ if(TWITTER_ENABLED){
   var TWITTER_ACCESS_SECRET = tsettings.access_secret || "";
 }
 var usersSet = [];
+var userdb = "";
 // Episode countdown
 var airDate = Date.UTC(2015, 4-1, 4, 15, 30, 0); // Year, month-1, day, hour, minute, second (UTC)
 var week = 7*24*60*60*1000;
@@ -50,14 +64,29 @@ var seasonEpCount = 26;
 var failed = false;
 
 // Rules for individual channels.
-var rules = {"#bronydom":["You can read the rules at http://goo.gl/8822BD"]};
+var rules = {"#bronydom":["You can read the rules for the #Bronydom at http://goo.gl/8822BD"]};
 
 // This is the list of all your commands.
 // "command":{"action":YOUR FUNCTION HERE, "description":COMMAND USAGE(IF NOT PRESENT, WONT SHOW UP IN !commands)}
 var commands = {
+
     "commands":{"action":(function(simplified, nick, chan, message, target) {
         listCommands(target, nick)
     }), "description":"- All Commands"},
+
+    "twibot":{"action":(function(simplified, nick, chan, message, target) {
+        var param = simplified[1];
+        if(simplified[1]) {
+          if(param.toLowerCase() === "source" || param.toLowerCase() === "code") {
+            sendPM(target, nick+": You can find the source for me at "+twibotSource);
+          } else if(param.toLowerCase() === "creator" || param.toLowerCase() === "owner" ||
+                    param.toLowerCase() === "developer") {
+            sendPM(target, nick+": I was developed by "+OWNER+".");
+          }
+        } else {
+          sendPM(target, nick+": Usage: \u0002"+PREFIX+"twibot\u000f <source | developer>");
+        }
+    }), "description":"- Information about TwiBot"},
 
     "command":{"action":(function(simplified, nick, chan, message, target) {
         if(simplified[1]) {
@@ -109,9 +138,65 @@ var commands = {
         })
     }), "description":"- Tune in to Bronydom Radio"},
 
-    "rq":{"action":(function(simplified, nick, chan, message, target) {
-        sendPM(target, nick+", go here to request things on the radio: http://www.bronydom.net/request (Doesn't work on live shows)");
-    }), "description":"- Request Link"},
+    // "rq":{"action":(function(simplified, nick, chan, message, target) {
+    //   console.log(rqTrackList);
+    // }), "description":"- Request/Queue a Song"},
+    //
+    // "request":{"action":(function(simplified, nick, chan, message, target) {
+    //   console.log(rqTrackList);
+    // }), "description":"- Request/Queue a Song"},
+    //
+    // "queue":{"action":(function(simplified, nick, chan, message, target) {
+    //   console.log(rqTrackList);
+    // }), "description":"- Request/Queue a Song"},
+
+    "skip":{"action":(function(simplified, nick, chan, message, target) {
+      var modeOfUser = INicksGetMode(nick, chan);
+      if(modeOfUser == "q" || modeOfUser == "h" || modeOfUser == "o" || modeOfUser == "v") {
+          if(TELNET_ENABLE) {
+            var announce = net.connect(TELNET_PORT, TELNET_HOST);
+            announce.pipe(process.stdout);
+            announce.on('connect', function () {
+              announce.write("skip\r\n");
+              announce.write("quit\r\n");
+              sendPM(target, "Skipped current song.")
+              announce.end();
+            });
+          } else {
+            sendPM(target, nick+ ": Unfortunately, Telnet capabilities aren't enabled, so I can't skip anything on the radio.");
+          }
+      } else {
+        sendPM(target, nick+ ": You must be VOICE or higher to skip songs.");
+      }
+    }), "description":"- Skip current song on the radio (requires Liquidsoap to work correctly) - Only available to voice or higher"},
+
+    "announce":{"action":(function(simplified, nick, chan, message, target) {
+      var modeOfUser = INicksGetMode(nick, chan);
+      if(modeOfUser == "q" || modeOfUser == "h" || modeOfUser == "o" || modeOfUser == "v") {
+        var param = simplified[1];
+        var textToSend = message.split(" ");
+        delete textToSend[0];
+        textToSend = textToSend.join(" ")
+        if(param != null) {
+          if(TELNET_ENABLE) {
+            var announce = net.connect(TELNET_PORT, TELNET_HOST);
+            announce.pipe(process.stdout);
+            announce.on('connect', function () {
+              announce.write("announce.push say:"+textToSend+"\r\n");
+              announce.write("quit\r\n");
+              sendPM(target, "Announcement sent! It should play on the radio in a few seconds.")
+              announce.end();
+            });
+          } else {
+            sendPM(target, nick+ ": Unfortunately, Telnet capabilities aren't enabled, so I can't announce anything to the radio.");
+          }
+        } else {
+          sendPM(target, nick+ ": You haven't included text for me to send! Usage: \""+PREFIX+"announce Sample Text\"");
+        }
+      } else {
+        sendPM(target, nick+ ": You must be VOICE or higher.");
+      }
+    }), "description":"- Announce something on the radio (requires Liquidsoap to work correctly) - Only available to voice or higher"},
 
     "yay":{"action":(function(simplified, nick, chan, message, target) {
         sendPM(target, nick+": http://flutteryay.com")
@@ -172,6 +257,50 @@ var commands = {
         }
     }),"description":"s<Season> e<Episode Number> - Open a pony episode"},
 
+    "vote":{"action":(function(simplified, nick, chan, message, target) {
+        //http://www.bronydom.net/api/voting/up.php
+        var param = simplified[1];
+        if(param != null) {
+          if(param.toLowerCase() === "up") {
+            JSONGrabber("http://www.bronydom.net/api/voting/up.php", function(success, content) {
+                if(success) {
+                    if(content.result != null) {
+                        var theTitle = new Buffer(content.contents.song, "utf8").toString("utf8");
+                        var splitUp = theTitle.replace(/\&amp;/g, "&").split(" - ");
+                        if(splitUp.length===2) {
+                            theTitle=irc.colors.wrap("bold",splitUp[1])+(splitUp[0]?" by "+irc.colors.wrap("bold",splitUp[0]):"");
+                        }
+                        sendPM(target, "Successfully upvoted "+theTitle+". The new score is "+irc.colors.wrap("bold",content.contents.vote)+".");
+                    } else {
+                        callback("Cannot complete that action for some reason. Is the API down?", "", false);
+                    }
+                } else {
+                    callback("Cannot complete that action for some reason. Is the server down?", "", false);
+                }
+            });
+          } else if(param.toLowerCase() === "down") {
+            JSONGrabber("http://www.bronydom.net/api/voting/down.php", function(success, content) {
+                if(success) {
+                    if(content.result != null) {
+                        var theTitle = new Buffer(content.contents.song, "utf8").toString("utf8");
+                        var splitUp = theTitle.replace(/\&amp;/g, "&").split(" - ");
+                        if(splitUp.length===2) {
+                            theTitle=irc.colors.wrap("bold",splitUp[1])+(splitUp[0]?" by "+irc.colors.wrap("bold",splitUp[0]):"");
+                        }
+                        sendPM(target, "Successfully downvoted "+theTitle+". The new score is "+irc.colors.wrap("bold",content.contents.vote)+".");
+                    } else {
+                        callback("Cannot complete that action for some reason. Is the API down?", "", false);
+                    }
+                } else {
+                    callback("Cannot complete that action for some reason. Is the server down?", "", false);
+                }
+            });
+          }
+        }
+
+    }),"description":"- Upvote/Downvote current song. Usage: \""+PREFIX+"vote [up/down]\""},
+
+
     "statusof":{"action":(function(simplified, nick, chan, message, target) {
         var array = message.split(" ");
         var param = array[1];
@@ -191,7 +320,6 @@ var commands = {
     }),"description":"Check the status of a user."},
 
     "showtweet":{"action":(function(simplified, nick, chan, message, target) {
-
         var param = simplified[1];
         if(TWITTER_ENABLED) {
           //sendPM(target, param);
@@ -239,7 +367,7 @@ var commands = {
             	var roll = randomize(1,4);
     			var messageToSend = "Error. Roll # is: "+roll;
     			switch(roll) {
-    				case 1:
+    				  case 1:
             			messageToSend = "OH, that reminds me! I need to read that new Daring Do book!";
             			break;
         			case 2:
@@ -267,18 +395,20 @@ var commands = {
             	sendPM(target, "I hereby declare all of the bronies to bow down to me, THE ABSOLUTE BESTEST PONY OF ALL!");
             } else if(param.toUpperCase() === "SPIKE") {
             	sendPM(target, "My #1 Assistant! :D");
-            } else if(param.toUpperCase() === "PINKIE" && simplified[2].toUpperCase() === "PIE") {
-            	sendPM(target, "Where's Pinkie? Did she break the fourth wall again?");
-            } else if(param.toUpperCase() === "TWILIGHT" && simplified[2].toUpperCase() === "SPARKLE") {
+            } else if(param.toUpperCase() === "PINKIE" && simplified[2] && simplified[2].toUpperCase() === "PIE") {
+            	sendPM(target, "Speaking of which, where is Pinkie? Did she break the fourth wall again?");
+            } else if(param.toUpperCase() === "TWILIGHT" && simplified[2] && simplified[2].toUpperCase() === "SPARKLE") {
             	sendPM(target, "Uuhh, why would I talk about me??");
-            } else if(param.toUpperCase() === "THE" && simplified[2].toUpperCase() === "DRESS") {
+            } else if(param.toUpperCase() === "THE" && simplified[2] && simplified[2].toUpperCase() === "DRESS") {
             	sendPM(target, "Obviously, it's Blue and Black...or is it White and Gold?");
             	bot.action(target, "starts sweating uncontrollably")
             } else if(param.toUpperCase() === "MARKIPLIER") {
             	sendPM(target, "Apparently, all I see now is Markiplier on YouTube, and then some random FNAF video afterwards.");
             } else if(param.toUpperCase() === "PEWDIEPIE") {
               sendPM(target, "The last time I watched PewDiePie was when I was browsing through the top charts. His scream scared me and I probably will never return.");
-            } else if(param.toUpperCase() === "BRONYDOM" && simplified[2].toUpperCase() === "NETWORK") {
+            } else if(param.toUpperCase() === "BRONYDOM" && simplified[2] && simplified[2].toUpperCase() === "NETWORK") {
+              sendPM(target, "The network I belong to! :D");
+            } else if(param.toUpperCase() === "BRONYDOM") {
               sendPM(target, "The network I belong to! :D");
             } else if(param.toUpperCase() === "GEEKBRONY") {
               sendPM(target, "Uhm, about GeekBrony? He's cool. He developed me! :D");
@@ -288,13 +418,13 @@ var commands = {
               sendPM(target, "Haha, funny. I don't think a javascript program can wear some clothes.");
             } else if(param.toUpperCase() === "JOKE" || param.toUpperCase() === "HUMOR") {
               sendPM(target, "How do I joke? I'm a program. I don't think programs with actual humor have been invented yet.");
-            } else if(param.toUpperCase() === "MARRY" && simplified[2].toUpperCase() === "ME") {
+            } else if(param.toUpperCase() === "MARRY" && simplified[2] && simplified[2].toUpperCase() === "ME") {
               sendPM(target, "*sighs* Am I an actual real object?");
             } else if(param.toUpperCase() === "FUN") {
               sendPM(target, "We need Pinkie Pie over here! D:");
             } else if(param.toUpperCase() === "SOMETHING" && !(simplified.hasOwnProperty(2))) {
               sendPM(target, "Haha, very clever. Try something else.");
-            } else if(param.toUpperCase() === "SOMETHING" && simplified[2].toUpperCase() === "ELSE") {
+            } else if(param.toUpperCase() === "SOMETHING" && simplified[2] && simplified[2].toUpperCase() === "ELSE") {
               sendPM(target, "Very funny.");
             } else if(param.toUpperCase() === "SOCKS" || param.toUpperCase() === "SEXY") {
               bot.action(target, "puts on socks and scrunches");
@@ -315,14 +445,18 @@ var commands = {
               sendPM(target, "nopony says no to me! D:");
             } else if(param.toUpperCase() === "YES") {
               sendPM(target, ";)");
-            } else if(param.toUpperCase() === "YOU" && simplified[2].toUpperCase() === "FAILED") {
+            } else if(param.toUpperCase() === "YOU" && simplified[2] && simplified[2].toUpperCase() === "FAILED") {
               sendPM(target, "...");
               failed = true;
-            } else if(param.toUpperCase() === "YOU" && simplified[2].toUpperCase() === "WON") {
+            } else if(param.toUpperCase() === "YOU" && simplified[2] && simplified[2].toUpperCase() === "WON") {
               failed = false;
               sendPM(target, ":D");
+            } else if(param.toUpperCase() === "PRINCESS") {
+              sendPM(target, "*robot voice* I AM THE PRINCESS OF PONE. YOU MUST ASSIMILATE TO THE HERD.");
             } else {
-            	sendPM(target, "I do not know what "+param+" is, unfortunately! I MUST STUDY ABOUT "+param.toUpperCase()+"!");
+            	// var randomPhrase = randPhrase();
+              // sendPM(target, simplified[1]+": "+randomPhrase)
+              sendPM(target, simplified[1]+" isn't in my response library yet. Yell at GeekBrony to add it.");
             }
         } else {
             sendPM(target, irc.colors.wrap("dark_red",nick+": Please provide me with a topic to talk about!"));
@@ -355,7 +489,6 @@ function IChannelNames(onChannel, namesObj) {
     }
     nicks[channel] = initial;
 }
-
 function IHandleJoin(nickname, onChannel) {
     var channel = onChannel.toLowerCase();
     if(channel in nicks) {
@@ -555,16 +688,13 @@ function listRulesForChannel(onChannel) {
 function JSONGrabber(url, callback) {
     http.get(url, function(res){
         var data = '';
-
         res.on('data', function (chunk){
             data += chunk;
         });
-
         res.on('end',function(){
             var obj = JSON.parse(data);
             callback(true, obj);
-        })
-
+        });
     }).on('error', function(e) {
         callback(false, e.message);
     });
@@ -590,10 +720,10 @@ function getCurrentSong(callback) {
                 }
                 callback(theTitle, irc.colors.wrap("bold",content.radio.listeners.all_streams), irc.colors.wrap("bold",content.radio.song_info.score), true);
             } else {
-                callback("Bronydom Radio is offline (for some reason)!", "", false);
+                callback("Cannot complete that action for some reason. Is the API down?", "", false);
             }
         } else {
-            callback("Bronydom Radio is offline (for some reason)!", "", false);
+            callback("Cannot complete that action for some reason. Is the server down?", "", false);
         }
     });
 }
@@ -601,7 +731,7 @@ function getCurrentSong(callback) {
 function getTweet(tweetID, target) {
   tw.get('statuses/show/', {id: tweetID}, function(error, tweet, response){
     if(error) sendPM(target, "Error: " + error);
-    sendPM(target, irc.colors.wrap("bold","@"+tweet.user.screen_name)+": "+tweet.text.replace("\n", " ! "));
+    sendPM(target, irc.colors.wrap("bold","@"+tweet.user.screen_name)+": "+tweet.text.replace("\n", " "));
     //console.log(Object.keys(tweet.user.screen_name)); //Development Test
   });
 }
@@ -740,6 +870,12 @@ function ircRelayMessageHandle(c) {
     });
 }
 
+// function getMusicDir(dir) {
+//   tracklist.list(dir, function (err, results) {
+//     rqTrackList = results;
+//   });
+// }
+
 function ircRelayServer() {
     if (!settings.enableRelay) return;
 
@@ -837,6 +973,25 @@ var tw = new Twitter({
   access_token_secret: TWITTER_ACCESS_SECRET
 });
 
+tw.stream('statuses/filter', {follow: '1521569635'}, function(stream){
+  stream.on('data', function(tweet) {
+    if(tweet.user.id_str === "1521569635") {
+      var TweetThing = [];
+      TweetThing.push("Tweet from "+irc.colors.wrap("bold","@"+tweet.user.screen_name)+": " +tweet.text.replace("\n", " "));
+      TweetThing.push("Link to Tweet: http://www.twitter.com/"+tweet.user.screen_name+"/status/"+tweet.id_str);
+      sendWithDelay(TweetThing, CHANNEL, 1000);
+    } else {
+
+    }
+  });
+
+  stream.on('error', function(error) {
+  });
+});
+
+/*getMusicDir(MUSICDIR);
+setInterval(getMusicDir(MUSICDIR), 900*1000);*/
+
 bot.on('error', function (message) {
     info('ERROR: %s: %s', message.command, message.args.join(' '));
 });
@@ -872,12 +1027,29 @@ bot.on('join', function (channel, nick) {
         if(randomInt === 5) sendPM(channel, "and then there was TwiBot.");
         if(randomInt === 6) sendPM(channel, "Hey, how are you guys?");
     } else {
+        fs.readFile('users.txt', 'utf8', function(err, data) {
+          if (err) {
+            console.log(err.message);
+          } else {
+            userdb = data;
+            console.log("Refreshed user database.")
+          }
+        });
         mylog((" --> ".green.bold)+'%s has joined %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has joined ", "JOIN");
-        if(nick.toUpperCase() === "GEEKBRONY") {
-        	sendPM(channel, nick+", my developer, is back! :D");
+        if(nick.toUpperCase() === OWNER.toUpperCase()) {
+        	sendPM(channel, OWNER+", my developer, is back on "+channel+"! :D");
         } else {
-        	sendPM(channel, "Hello, "+nick+"!");
+          sendPM(channel, "Hello, "+nick+"! Welcome to "+ channel +"!");
+          if(!(userdb.indexOf(nick) > -1)) {
+            fs.appendFile('users.txt', nick+"\n", function(err) {
+              if(err) {
+                console.log("[ERROR] User couldn't be added to database \'users.txt\'.");
+              }
+            });
+            bot.notice(nick, "Welcome to the Bronydom Network IRC channel, "+ nick +"! Don't be afraid to start a conversation, nobody will bite (hard). :)");
+            bot.notice(nick, "There are rules to this IRC channel. Read them, they are important: http://goo.gl/8822BD");
+          }
         }
         IHandleJoin(nick, channel);
     }
@@ -1000,7 +1172,6 @@ function info() {
 }
 
 function sendChat() {
-
     if(failed) {
           var message = util.format.apply(null, arguments);
           logChat(NICK, CHANNEL, message);
@@ -1013,7 +1184,7 @@ function sendChat() {
 }
 function sendPM(target) {
   if(failed) {
-        console.log("you won");
+        console.log("you won, congrats ;)");
         if (target === CHANNEL) {
             sendChat.apply(null, Array.prototype.slice.call(arguments, 1));
             return;
