@@ -5,9 +5,9 @@ Modified by [GeekBrony](https://github.com/geekbrony)
 
 ### Getting started
 1. Clone this repo
-2. Install the dependencies `npm install`
+2. Install the dependencies: `npm install`
 3. See the instructions below on how to create the settings files
-4. Run the bot `npm start`
+4. Run the bot: `npm start`
 
 ### Create the settings files
 Make a copy of `example.settings.json` and rename it to `settings.json`. Edit the file as necessary.
