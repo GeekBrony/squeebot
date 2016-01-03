@@ -9,6 +9,7 @@
 // Modules
 var net = require('net');
 var http = require('http');
+var https = require('https');
 var irc = require('irc');
 var colors = require('colors');
 var util = require('util');
@@ -38,6 +39,7 @@ var nickPassword = settings.nickpass;
 var TELNET_ENABLE = settings.telnet_enabled || false;
 var TELNET_PORT = settings.telnet_port || 1234;
 var TELNET_HOST = settings.telnet_host || "localhost";
+var G_API_KEY = settings.google_api_key;
 var twibotSource = "https://github.com/GeekBrony/squeebot-twibot";
 var OWNER = "GeekBrony";
 var MUSICDIR = "/srv/music/";
@@ -64,7 +66,7 @@ var seasonEpCount = 26;
 var failed = false;
 
 // Rules for individual channels.
-var rules = {"#bronydom":["You can read the rules for the #Bronydom at http://goo.gl/8822BD"]};
+var rules = {"#bronydom":["You can read the rules for #Bronydom at http://goo.gl/8822BD"]};
 
 // This is the list of all your commands.
 // "command":{"action":YOUR FUNCTION HERE, "description":COMMAND USAGE(IF NOT PRESENT, WONT SHOW UP IN !commands)}
@@ -72,6 +74,10 @@ var commands = {
 
     "commands":{"action":(function(simplified, nick, chan, message, target) {
         listCommands(target, nick)
+    }), "description":"- All Commands"},
+    
+    "help":{"action":(function(simplified, nick, chan, message, target) {
+        listHelp(target, chan, nick)
     }), "description":"- All Commands"},
 
     "twibot":{"action":(function(simplified, nick, chan, message, target) {
@@ -127,6 +133,16 @@ var commands = {
             }
         })
     }), "description":"- Currently playing song"},
+    
+    "l":{"action":(function(simplified, nick, chan, message, target) {
+        getListenCount(function(e, i) {
+            if(i) {
+                sendPM(target, "Listeners: "+e+" | Click here to tune in: http://brony.co/tune")
+            } else {
+                sendPM(target, e)
+            }
+        })
+    }), "description":"- How many listeners are on Bronydom Radio?"},
 
     "radio":{"action":(function(simplified, nick, chan, message, target) {
         getCurrentSong(function(d, e, f, i) {
@@ -137,6 +153,11 @@ var commands = {
             }
         })
     }), "description":"- Tune in to Bronydom Radio"},
+    
+    "uptime":{"action":(function(simplified, nick, chan, message, target) {
+        var time = formatUptime(process.uptime());
+    	sendPM(target, "Uptime: "+time)
+    }), "description":"- Uptime of TwiBot"},
 
     // "rq":{"action":(function(simplified, nick, chan, message, target) {
     //   console.log(rqTrackList);
@@ -146,9 +167,49 @@ var commands = {
     //   console.log(rqTrackList);
     // }), "description":"- Request/Queue a Song"},
     //
-    // "queue":{"action":(function(simplified, nick, chan, message, target) {
-    //   console.log(rqTrackList);
-    // }), "description":"- Request/Queue a Song"},
+    "queue":{"action":(function(simplified, nick, chan, message, target) {
+      var modeOfUser = INicksGetMode(nick, chan);
+      if(modeOfUser == "q" || modeOfUser == "h" || modeOfUser == "o" || modeOfUser == "v") {
+        var param = simplified[1];
+        var textToSend = message.split(" ");
+        var link = textToSend[2];
+        if(param.toLowerCase() === "yt" || param.toLowerCase() === "youtube") {
+          if(link) {
+            if(link.indexOf("youtu.be") !== -1 || link.indexOf("youtube.com") !== -1) {
+              var sys = require('sys');
+              var exec = require('child_process').exec;
+              exec("/srv/scr/yt-queue "+link, function (error,stdout,stderr){
+                sys.puts(stdout)
+                sendPM(target, nick+ ": Queued YouTube Video! Link should start playing once a few songs pass.");
+              });
+            } else {
+              sendPM(target, nick+ ": Unsupported URL scheme! URL has to contain \"youtube.com\" or \"youtu.be\"");
+            }
+          } else {
+            sendPM(target, nick+ ": Please provide a link for a YouTube video!");
+          }
+        } else if(param.toLowerCase() === "sc" || param.toLowerCase() === "soundcloud") {
+          if(link) {
+            if(link.indexOf("soundcloud.com") !== -1) {
+              var sys = require('sys');
+              var exec = require('child_process').exec;
+              exec("/srv/scr/sc-queue "+link, function (error,stdout,stderr){
+                sys.puts(stdout)
+                sendPM(target, nick+ ": Queued SoundCloud sound! Link should start playing once a few songs pass.");
+              });
+            } else {
+              sendPM(target, nick+ ": Unsupported URL scheme! URL has to contain \"soundcloud.com\"");
+            }
+          } else {
+            sendPM(target, nick+ ": Please provide a SoundCloud link!");
+          }
+        } else {
+          sendPM(target, "Usage: \""+PREFIX+"queue [yt / sc]\"");
+        }
+      } else {
+        sendPM(target, nick+ ": You must be VOICE or higher to queue to Bronydom Radio.");
+      }
+    }), "description":"- Request/Queue a Song"},
 
     "skip":{"action":(function(simplified, nick, chan, message, target) {
       var modeOfUser = INicksGetMode(nick, chan);
@@ -211,7 +272,7 @@ var commands = {
     }), "description":"Hugs for everyone :)"},
 
     "ping":{"action":(function(simplified, nick, chan, message, target) {
-        sendPM(nick, "pong");
+        sendPM(chan, "pong");
     }), "description":"Ping -> Pong"},
 
     "moon":{"action":(function(simplified, nick, chan, message, target) {
@@ -660,6 +721,19 @@ function listCommands(target, nick) {
     sendWithDelay(comms, nick, 1000);
 }
 
+function listHelp(target, nick, s) {
+    var listofem = [];
+    var variab = false;
+    for(var command in commands) {
+        var obj = commands[command];
+        if("description" in obj) {
+            variab = !variab;
+            listofem.push("\u0002"+irc.colors.wrap((variab?"dark_green":"light_green"), PREFIX+command));
+        }
+    }
+    sendPM(nick, s+": "+listofem.join(", "));
+}
+
 function sendWithDelay(messages, target, time) {
     var timeout = time || 1000;
     var c = 0;
@@ -671,6 +745,16 @@ function sendWithDelay(messages, target, time) {
     }
     sendMessageDelayed()
 }
+
+function sendWithDelayBefore(message, target, time) {
+    var timeout = time || 1000;
+    function sendMessageDelayed() {
+	setTimeout(function(target, message) {
+	  sendPM(target, message);
+	}, timeout);
+    }
+}
+
 
 // Send a list of rules to a channel.
 function listRulesForChannel(onChannel) {
@@ -700,6 +784,29 @@ function JSONGrabber(url, callback) {
     });
 }
 
+// Grab JSON from an url (HTTPS)
+function JSONGrabber_HTTPS(url, callback) {
+    https.get(url, function(res){
+        var data = '';
+
+        res.on('data', function (chunk){
+            data += chunk;
+        });
+
+        res.on('end',function(){
+            try{
+                var obj = JSON.parse(data);
+                callback(true, obj);
+            }catch(err) {
+                callback(false, "Parse Failed.");
+            }
+        })
+
+    }).on('error', function(e) {
+        callback(false, e.message);
+    });
+}
+
 // Experimental Function!
 function formatmesg(message) {
     var pass1 = message.match(/#c/g) ? message.replace(/#c/g, '\u0003').replace(/#f/g, "\u000f") + '\u000f' : message;
@@ -710,7 +817,7 @@ function formatmesg(message) {
 
 // Get current Bronydom Radio song
 function getCurrentSong(callback) {
-    JSONGrabber("http://www.bronydom.net/api/stats/", function(success, content) {
+    JSONGrabber_HTTPS("https://www.bronydom.net/api/radio/", function(success, content) {
         if(success) {
             if(content.radio.song_info.text != null) {
                 var theTitle = new Buffer(content.radio.song_info.text, "utf8").toString("utf8");
@@ -724,6 +831,94 @@ function getCurrentSong(callback) {
             }
         } else {
             callback("Cannot complete that action for some reason. Is the server down?", "", false);
+        }
+    });
+}
+
+function getListenCount(callback) {
+    JSONGrabber_HTTPS("https://www.bronydom.net/api/radio/", function(success, content) {
+        if(success) {
+            if(content.radio.listeners.all_streams != null) {
+                callback(irc.colors.wrap("bold",content.radio.listeners.all_streams), true);
+            } else {
+                callback("Cannot complete that action for some reason. Is the API down?", "", false);
+            }
+        } else {
+            callback("Cannot complete that action for some reason. Is the server down?", "", false);
+        }
+    });
+}
+
+function toHHMMSS(numbr) {
+    var sec_num = parseInt(numbr, 10); // don't forget the second param
+    var hours   = Math.floor(sec_num / 3600);
+    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+    if (hours   < 10) {hours   = "0"+hours;}
+    if (minutes < 10) {minutes = "0"+minutes;}
+    if (seconds < 10) {seconds = "0"+seconds;}
+    var time = '';
+    if(parseInt(hours) > 0)
+        time = hours+':'+minutes+':'+seconds;
+    else
+        time = minutes+':'+seconds;
+    return time;
+}
+
+function addCommas(nStr) {
+    nStr += '';
+    var x = nStr.split('.');
+    var x1 = x[0];
+    var x2 = x.length > 1 ? '.' + x[1] : '';
+    var rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    return x1 + x2;
+}
+
+function ytDuration(duration) {
+    var a = duration.match(/\d+/g);
+
+    if (duration.indexOf('M') >= 0 && duration.indexOf('H') == -1 && duration.indexOf('S') == -1) {
+        a = [0, a[0], 0];
+    }
+
+    if (duration.indexOf('H') >= 0 && duration.indexOf('M') == -1) {
+        a = [a[0], 0, a[1]];
+    }
+    if (duration.indexOf('H') >= 0 && duration.indexOf('M') == -1 && duration.indexOf('S') == -1) {
+        a = [a[0], 0, 0];
+    }
+
+    duration = 0;
+
+    if (a.length == 3) {
+        duration = duration + parseInt(a[0]) * 3600;
+        duration = duration + parseInt(a[1]) * 60;
+        duration = duration + parseInt(a[2]);
+    }
+
+    if (a.length == 2) {
+        duration = duration + parseInt(a[0]) * 60;
+        duration = duration + parseInt(a[1]);
+    }
+
+    if (a.length == 1) {
+        duration = duration + parseInt(a[0]);
+    }
+    return toHHMMSS(duration.toString());
+}
+
+function getYoutubeFromVideo(id, target) {
+    if(G_API_KEY == null) return;
+    var g_api_base = "https://www.googleapis.com/youtube/v3/videos?id="+id+"&key="+G_API_KEY+"&part=snippet,contentDetails,statistics,status&fields=items(id,snippet,statistics,contentDetails)";
+    JSONGrabber_HTTPS(g_api_base, function(success, content) {
+        if(success==false) return;
+        if("items" in content) {
+            var tw = content.items[0];
+            sendPM(target, "YouTube video \""+tw.snippet.title+"\" Views: "+addCommas(tw.statistics.viewCount.toString())+" Duration: "+ytDuration(tw.contentDetails.duration.toString())+" By \""+tw.snippet.channelTitle+"\"");
         }
     });
 }
@@ -784,8 +979,47 @@ function findUrls(text) {
     return urlArray;
 }
 
+function formatUptime(seconds){
+  function pad(s){
+    return (s < 10 ? '0' : '') + s;
+  }
+  var hours = Math.floor(seconds / (60*60));
+  var minutes = Math.floor(seconds % (60*60) / 60);
+  var seconds = Math.floor(seconds % 60);
+
+  return pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+}
+
+
+
 // Handles messages
 function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
+	if(nick === "BDNRelay") {
+	    var re1='.*?';	// Non-greedy match on filler
+      	var re2='(?:[a-z][a-z]+)';	// Uninteresting: word
+      	var re3='.*?';	// Non-greedy match on filler
+      	var re4='((?:[a-z][a-z]+))';	// Word 1
+
+      	var p = new RegExp(re1+re2+re3+re4,["i"]);
+      	var m = p.exec(nick+" "+message);
+      	if (m != null)
+      	{
+          nick = m[1];
+      	}
+		
+		re1='(\\{.*?\\})';	// Curly Braces 1
+      	re2='(\\s+)';	// White Space 1
+      	
+      	p = new RegExp(re1+re2,["i"]);
+      	m = p.exec(message);
+      	
+      	var cbraces1=m[1];
+        var ws1=m[2];
+        message = message.replace(cbraces1, "");
+        message = message.replace(ws1, "");
+        
+        simplified = message.replace(/\:/g, ' ').replace(/\,/g, ' ').replace(/\./g, ' ').replace(/\?/g, ' ').trim().split(' ');
+	}
     var target = isPM ? nick : chan;
     if(simplified[0].indexOf(PREFIX) === 0 && simplified[0].toLowerCase().substring(1) in commands) {
         var command = commands[simplified[0].toLowerCase().substring(1)];
@@ -796,15 +1030,15 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
     }else if(findUrls(message).length > 0) {
         var link = findUrls(message)[0];
         if(link.indexOf("youtu.be") !== -1) {
-        var det = link.substring(link.indexOf('.be/')+4);
-            if(det) {
-                youtube.video(det).details(function(ne, tw) { if( ne instanceof Error ) { mylog("Error in getting youtube url!") } else { sendPM(target, "YouTube video \""+tw.title+"\" Uploaded by \""+tw.uploader+"\" Views: "+tw.viewCount);}});
-            }
+          var det = link.substring(link.indexOf('.be/')+4);
+          if(det) {
+            getYoutubeFromVideo(det, target);
+          }
         } else if(link.indexOf("youtube.com") !== -1) {
-        var det = link.match("[\\?&]v=([^&#]*)")[1];
-            if(det) {
-            youtube.video(det).details(function(ne, tw) { if( ne instanceof Error ) { mylog("Error in getting youtube url!") } else { sendPM(target, "YouTube video \""+tw.title+"\" Uploaded by \""+tw.uploader+"\" Views: "+tw.viewCount);}});
-            }
+          var det = link.match("[\\?&]v=([^&#]*)")[1];
+          if(det) {
+            getYoutubeFromVideo(det, target);
+          }
         } else if(link.indexOf("dailymotion.com/video/") !== -1) {
             var det = link.match("/video/([^&#]*)")[1];
             if(det) {
@@ -824,6 +1058,52 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
         }
     }
     else if(isMentioned) {
+    	var date = new Date();
+    	var current_hour = date.getHours();
+    	var timeofdayword = "";
+    	if(current_hour >= 4 && current_hour <= 11) {
+    		timeofdayword = "morning";
+    	} else if (current_hour >= 12 && current_hour <= 16) {
+    		timeofdayword = "afternoon";
+    	} else if (current_hour >= 17 && current_hour <= 20) {
+    		timeofdayword = "evening";
+    	} else {
+    		timeofdayword = "night";
+    	}
+    	var vara = simplified[0].toLowerCase();
+    	var varb = simplified[1].toLowerCase();
+    	if(vara == "hello" || vara == "hi" || vara == "hey" || vara == "oi") {
+    		var roll = randomize(1,3);
+    		var messageToSend = "For some reason, an error happened. :O For reference, Roll # is: "+roll;
+    		switch(roll) {
+    		  	case 1:
+            		messageToSend = "Oh, hey "+nick+"! How are you on this fine "+timeofdayword+"?";
+            		break;
+                case 2:
+            		messageToSend = "Hello, "+nick+"! How are you?";
+            		break;
+                case 3:
+            		messageToSend = nick+": How are you today?";
+            		break;
+    		}
+        	sendPM(target, messageToSend);
+    	} else
+    	if (varb == "hello" || varb == "hi" || varb == "hey" || varb == "oi") {
+    		var roll = randomize(1,3);
+    		var messageToSend = "For some reason, an error happened. :O For reference, Roll # is: "+roll;
+    		switch(roll) {
+    		  	case 1:
+            		messageToSend = "Oh, hey "+nick+"! How are you on this fine "+timeofdayword+"?";
+            		break;
+                case 2:
+            		messageToSend = "Hello, "+nick+"! How are you?";
+            		break;
+                case 3:
+            		messageToSend = nick+": How are you today?";
+            		break;
+    		}
+        	sendPM(target, messageToSend);
+    	} else {
     	var roll = randomize(1,9);
     	var messageToSend = "For some reason, an error happened. :O For reference, Roll # is: "+roll;
     	switch(roll) {
@@ -856,6 +1136,7 @@ function handleMessage(nick, chan, message, simplified, isMentioned, isPM) {
             	break;
     	}
         sendPM(target, messageToSend);
+    	}
     }
 }
 
@@ -869,12 +1150,6 @@ function ircRelayMessageHandle(c) {
         }
     });
 }
-
-// function getMusicDir(dir) {
-//   tracklist.list(dir, function (err, results) {
-//     rqTrackList = results;
-//   });
-// }
 
 function ircRelayServer() {
     if (!settings.enableRelay) return;
@@ -989,9 +1264,6 @@ tw.stream('statuses/filter', {follow: '1521569635'}, function(stream){
   });
 });
 
-/*getMusicDir(MUSICDIR);
-setInterval(getMusicDir(MUSICDIR), 900*1000);*/
-
 bot.on('error', function (message) {
     info('ERROR: %s: %s', message.command, message.args.join(' '));
 });
@@ -1040,7 +1312,9 @@ bot.on('join', function (channel, nick) {
         if(nick.toUpperCase() === OWNER.toUpperCase()) {
         	sendPM(channel, OWNER+", my developer, is back on "+channel+"! :D");
         } else {
-          sendPM(channel, "Hello, "+nick+"! Welcome to "+ channel +"!");
+          setTimeout(function() {
+	  sendPM(channel, "Welcome to "+channel+", "+nick+"!");
+	  }, 1350);
           if(!(userdb.indexOf(nick) > -1)) {
             fs.appendFile('users.txt', nick+"\n", function(err) {
               if(err) {
@@ -1058,17 +1332,18 @@ bot.on('kick', function (channel, nick, by, reason, message) {
     if (nick === NICK) {
         mylog((" <-- ".red.bold)+"You was kicked from %s by %s: %s", channel.bold, message.nick, reason);
         info("Rejoining "+channel.bold+" in 5 seconds...");
-        ILeftAChannel(channel);
+        //ILeftAChannel(channel);
         setTimeout(function () {
+            info("Rejoining "+channel.bold);
             bot.join(channel);
-        }, 5*1000);
+        }, 60*1000);
     } else {
         mylog((" <-- ".red.bold)+nick+" was kicked from %s by %s: %s", channel.bold, message.nick, reason);
         emitter.emit('newIrcMessage', nick, channel, " was kicked by "+message.nick+" ("+reason+")", "KICK");
         IHandlePart(nick, channel);
     }
 })
-bot.on('part', function (channel, nick, reason) {
+bot.on('part', function (channel, nick, reason, message) {
     if (nick !== NICK) {
         mylog((" <-- ".red.bold)+'%s has left %s', nick.bold, channel.bold);
         emitter.emit('newIrcMessage', nick, channel, " has left ", "PART");
@@ -1079,12 +1354,12 @@ bot.on('part', function (channel, nick, reason) {
         ILeftAChannel(channel);
     }
 });
-bot.on('quit', function (nick, reason, channels) {
+bot.on('quit', function (nick, reason, channels, message) {
     mylog((" <-- ".red.bold)+'%s has quit (%s)', nick.bold, reason);
     emitter.emit('newIrcMessage', nick, "", " has quit ("+reason+")", "QUIT");
     //sendPM(channel, "Bye, "+nick+"!");
     IHandleQuit(nick);
-});
+})
 bot.on('names', function(channel, nicks) {
     IChannelNames(channel, nicks);
 });
@@ -1245,3 +1520,11 @@ function randomstring()
 
     return text;
 }
+
+rl.on('SIGINT', function() {
+    info("Quitting...");
+    rl.setPrompt("");
+    bot.disconnect("^C received. Bye!", function () {
+        process.exit(0);
+    });
+});
