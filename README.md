@@ -1,3 +1,5 @@
+## NOTE: This repository has not been in active development since May 2015
+
 # Squeebot-TwiBot
 
 This is a [node.js](http://nodejs.org/) powered IRC bot originally made by [LunaSquee](https://github.com/LunaSquee) and [djazz](https://github.com/daniel-j).
